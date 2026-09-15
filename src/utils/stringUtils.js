@@ -14,32 +14,27 @@ export function levenshteinDistance(a, b) {
 	if (a.length === 0) return b.length;
 	if (b.length === 0) return a.length;
 
-	const matrix = [];
+	// Two rows instead of a full matrix: each row only ever reads the one above it.
+	let prev = new Array(a.length + 1);
+	let curr = new Array(a.length + 1);
+	for (let j = 0; j <= a.length; j++) prev[j] = j;
 
-	// Initialize the first row and column
-	for (let i = 0; i <= b.length; i++) {
-		matrix[i] = [i];
-	}
-	for (let j = 0; j <= a.length; j++) {
-		matrix[0][j] = j;
-	}
-
-	// Fill in the rest of the matrix
 	for (let i = 1; i <= b.length; i++) {
+		curr[0] = i;
 		for (let j = 1; j <= a.length; j++) {
-			if (b.charAt(i - 1) === a.charAt(j - 1)) {
-				matrix[i][j] = matrix[i - 1][j - 1];
-			} else {
-				matrix[i][j] = Math.min(
-					matrix[i - 1][j - 1] + 1, // substitution
-					matrix[i][j - 1] + 1, // insertion
-					matrix[i - 1][j] + 1 // deletion
-				);
-			}
+			curr[j] =
+				b.charCodeAt(i - 1) === a.charCodeAt(j - 1)
+					? prev[j - 1]
+					: Math.min(
+							prev[j - 1] + 1, // substitution
+							curr[j - 1] + 1, // insertion
+							prev[j] + 1 // deletion
+						);
 		}
+		[prev, curr] = [curr, prev];
 	}
 
-	return matrix[b.length][a.length];
+	return prev[a.length];
 }
 
 /**
@@ -65,20 +60,43 @@ export function fuzzyMatch(query, target, maxDistance = 1) {
 	// For very short queries (1-2 chars), require exact match to avoid too many false positives
 	if (q.length <= 2) return false;
 
-	// For fuzzy matching, we need to check if any substring of the target
-	// is within the edit distance of the query
-	// We'll check windows of size query.length ± maxDistance
-	const minWindow = Math.max(1, q.length - maxDistance);
-	const maxWindow = q.length + maxDistance;
+	// Is any substring of the target within the edit distance of the query?
+	return substringWithinDistance(q, t, maxDistance);
+}
 
-	for (let windowSize = minWindow; windowSize <= maxWindow; windowSize++) {
-		for (let i = 0; i <= t.length - windowSize; i++) {
-			const substring = t.substring(i, i + windowSize);
-			const distance = levenshteinDistance(q, substring);
-			if (distance <= maxDistance) {
-				return true;
-			}
+/**
+ * Whether some substring of `t` is within `maxDistance` edits of `q`.
+ *
+ * Sellers' algorithm: Levenshtein with a free starting point anywhere in `t`, so
+ * one pass over `t` answers what comparing `q` against every window of length
+ * `q.length ± maxDistance` used to (a substring that close cannot be any other
+ * length). Magic search runs this for every searchable element on every
+ * keystroke, which is why it is not the window loop any more.
+ *
+ * @param {string} q - Non-empty query
+ * @param {string} t - Non-empty target
+ * @param {number} maxDistance - Whole number of edits allowed
+ * @returns {boolean}
+ */
+function substringWithinDistance(q, t, maxDistance) {
+	// col[i]: fewest edits turning q's first i characters into a substring of t
+	// ending at the current position of t.
+	let prev = new Int32Array(q.length + 1);
+	let curr = new Int32Array(q.length + 1);
+	for (let i = 0; i <= q.length; i++) prev[i] = i;
+
+	for (let j = 1; j <= t.length; j++) {
+		const c = t.charCodeAt(j - 1);
+		curr[0] = 0; // the match may start here for free
+		for (let i = 1; i <= q.length; i++) {
+			curr[i] = Math.min(
+				prev[i - 1] + (q.charCodeAt(i - 1) === c ? 0 : 1),
+				prev[i] + 1,
+				curr[i - 1] + 1
+			);
 		}
+		if (curr[q.length] <= maxDistance) return true;
+		[prev, curr] = [curr, prev];
 	}
 
 	return false;

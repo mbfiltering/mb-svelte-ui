@@ -18,7 +18,7 @@
  * copy is in DOCUMENTATION.md.
  */
 
-import { writable } from 'svelte/store';
+import { readable, writable } from 'svelte/store';
 import { clearLegacyPreferences, readPreference, writePreference } from './preferences.js';
 
 const isBrowser = typeof window !== 'undefined';
@@ -80,6 +80,23 @@ export function isDark(value) {
  * with `theme.set` — a bare store write persists nothing and repaints nothing.
  */
 export const theme = writable(isBrowser ? getStoredTheme() : THEMES.SYSTEM);
+
+/**
+ * Whether `<html>` is painted dark right now: the class, not the preference, so a
+ * page holding `lockTheme` reads as what it shows. For choosing between two assets
+ * in script when only one should be downloaded; a hidden `<img>` still fetches, so
+ * a `dark:hidden` pair downloads both. Always `false` on the server, where nothing
+ * is painted.
+ */
+export const paintedDark = readable(false, (set) => {
+	if (!isBrowser) return;
+	const html = document.documentElement;
+	const read = () => set(html.classList.contains('dark'));
+	read();
+	const observer = new MutationObserver(read);
+	observer.observe(html, { attributes: true, attributeFilter: ['class'] });
+	return () => observer.disconnect();
+});
 
 /**
  * Paint a preference onto `<html>`. Persists nothing.

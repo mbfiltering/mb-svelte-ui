@@ -1,6 +1,6 @@
 {
 	"name": "@mbsmart/ui",
-	"version": "0.1.44",
+	"version": "0.1.45",
 	"private": true,
 	"description": "MB Smart UI component library for SvelteKit",
 	"type": "module",
@@ -65,6 +65,10 @@
 			"default": "./dist/utils/i18n/sentenceCase.js"
 		}
 	},
+	"sideEffects": [
+		"**/*.css",
+		"./dist/version.js"
+	],
 	"files": [
 		"dist",
 		"!dist/**/*.test.*",

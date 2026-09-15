@@ -141,7 +141,9 @@ live region. Read that file before changing a colour or a list component.
 ```
 src/
 ├── index.js              # Main entry point (re-exports all)
+├── version.js            # Logs the version on load; the one JS module with a side effect
 ├── styles.css            # Global styles and Tailwind config
+├── assets/               # Imported images (ErrorPage illustrations, AnimatedLogo WebPs)
 ├── components/
 │   ├── index.js          # Barrel export for all components
 │   ├── atoms/            # Basic building blocks (Button, Badge, Input, NavDropdown, etc.)
@@ -158,7 +160,7 @@ src/
 
 | Layer       | Purpose                              | Examples                          |
 |-------------|--------------------------------------|-----------------------------------|
-| **Atoms**   | Single-purpose, primitive UI         | Avatar, Badge, CheckBox, FieldError, NavDropdown, Spinner, TextInput |
+| **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, Spinner, TextInput |
 | **Molecules** | Composed of atoms, reusable groups | Field, Grid, HeaderNav, Island, MultiInput, PageHeader |
 | **Organisms** | Complex, self-contained features   | Modal, SearchableList, TermsContent, ToastContainer |
 | **Templates** | Page layouts and shells            | AppShell, SectionedPage           |
@@ -178,6 +180,42 @@ is already right; without it the list reads the closest `.magicsearch-island`
 after mount. Item hits still go through `externalQuery`. Do not mount the full
 unpaginated list for CSS to scan; pagination is the guard that keeps keystrokes
 fast.
+
+Magic search is also why `fuzzyMatch` is a single pass rather than the window loop
+it used to be: it runs for every searchable element and every row on every
+keystroke. Any change to it must return exactly what it returns today; the
+September 2026 rewrite was checked against the old code on 500,000 random cases.
+
+---
+
+## Tree-shaking — `sideEffects` is a contract
+
+`package.json` declares `"sideEffects": ["**/*.css", "./dist/version.js"]`. That is
+what lets a consumer's bundler drop re-exports it does not use from the barrels:
+before it, importing `AppShell` from `@mbsmart/ui/templates` dragged `SectionedPage`
+into every technician dashboard page, and the sign-in pages carried components they
+never render (September 2026 performance audit, U1).
+
+The declaration is a promise that **no module other than CSS and `version.js` does
+anything when it is imported**. Keep it true:
+
+- **No top-level work in a JS module** that a consumer relies on without using an
+  export: no registering, no listeners, no store writes at module scope. Put it in
+  a function the consumer calls (`initTheme`, `registerTranslations`).
+- **A module that must run on import goes in the `sideEffects` list**, as
+  `version.js` is, or a bundler is entitled to delete it.
+- **Component `<style>` blocks are safe**: Svelte emits them as CSS modules, which
+  the `**/*.css` entry covers. After changing this list, rebuild a consumer and
+  diff its CSS selectors against the previous build; none should disappear.
+
+## Assets and downloads
+
+A hidden `<img>` is still downloaded, so **never ship a light/dark pair as two
+`<img>`s with `dark:hidden`**. `AnimatedLogo` uses CSS backgrounds keyed on `.dark`
+(correct on the server too); `ErrorPage` picks one image in the browser from
+`paintedDark`. `SvgIcon` fetches each icon once per page, and `Modal` binds its window
+listeners only while open. Both used to do that work for every instance, whether or
+not anything was showing.
 
 ---
 
@@ -210,6 +248,10 @@ nothing else. Host apps need **no i18n wiring for fonts at all**; nothing keys o
 `src/fonts/` holds **WOFF2 only**. Each of the four subsets ships as one upright and one
 italic variable font, declared `font-weight: 400 700` — 8 files total, versus 17 for the
 Poppins/Noto Sans stack this replaced.
+
+**Server-rendered pages preload the faces they are sure to use** through
+`fontPreload(lang, { italic })` in `utils/fonts.js`, passed as `preload` to SvelteKit's
+`resolve`. It matches on the file names below, so renaming a face means updating it.
 
 Before changing this:
 
@@ -279,6 +321,13 @@ unrelated things depending on which product you were looking at. Keep the split:
   technician portal's device search is the one real case.
 - **The footer is quiet on purpose** (40% / 35% opacity, `select-none`). Passing no
   `productName` removes it entirely.
+- **The account chip's `data-sveltekit-reload` stays until someone designs it out.**
+  The September 2026 performance audit (U5) proposed dropping it for a faster way
+  home and it was not done. The full load is what resets the technician portal's
+  in-memory Back-button history (`navigation.js`) and its device cache when a
+  technician goes home, and `ListCard` reloads for the same kind of clean start; a
+  client-side chip would change where "Go back" lands afterwards. It is not free
+  (a re-boot of the SPA), so revisit it with the navigation, not as a one-line tweak.
 
 ## The page header — one block, two states
 

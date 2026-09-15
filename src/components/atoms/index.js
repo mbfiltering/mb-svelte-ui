@@ -1,6 +1,7 @@
 import '../../version.js';
 
 // Atom components barrel export
+export { default as AnimatedLogo } from './AnimatedLogo.svelte';
 export { default as BackButton } from './BackButton.svelte';
 export { default as Avatar } from './Avatar.svelte';
 export { default as Badge } from './Badge.svelte';

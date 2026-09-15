@@ -1,6 +1,7 @@
 <script>
 	import { X, Minus, SquareArrowOutUpLeft, SquareArrowOutUpRight } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
+	import { on } from 'svelte/events';
 	import minimizedModals, {
 		registerMinimized,
 		unregisterMinimized,
@@ -261,6 +262,27 @@
 		return () => unregisterOpen(uid);
 	});
 
+	// Window listeners only while open. Closed modals stay mounted all over the
+	// portals (a device page holds about twenty), and every handler here already
+	// ignores a closed modal, so binding them for the modal's whole life cost a
+	// keydown handler and two state writes per resize for nothing. The viewport
+	// size is read on open and followed while open, which is when the minimized
+	// chip's position depends on it.
+	$effect(() => {
+		if (!isOpen) return;
+		const readViewport = () => {
+			innerWidth = window.innerWidth;
+			innerHeight = window.innerHeight;
+		};
+		readViewport();
+		const offKeydown = on(window, 'keydown', handleKeydown);
+		const offResize = on(window, 'resize', readViewport);
+		return () => {
+			offKeydown();
+			offResize();
+		};
+	});
+
 	// The chip corner and the restore icon mirror, so read the direction the page
 	// is actually rendering in. Re-read on open: the language can change under us.
 	$effect(() => {
@@ -310,8 +332,6 @@
 	const CHIP_BUTTON =
 		'g2 shrink-0 cursor-pointer rounded-lg p-1.5 text-gray-700 transition-colors hover:bg-neutral-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-zinc-750 dark:hover:text-white';
 </script>
-
-<svelte:window onkeydown={handleKeydown} bind:innerWidth bind:innerHeight />
 
 {#if isOpen}
 	<!-- Modal Backdrop -->

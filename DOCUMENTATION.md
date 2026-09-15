@@ -17,6 +17,7 @@
 
 1. [Installation & Setup](#installation--setup)
 2. [Atoms (Basic Components)](#atoms)
+   - [AnimatedLogo](#animatedlogo)
    - [Avatar](#avatar)
    - [BackButton](#backbutton)
    - [Badge](#badge)
@@ -70,6 +71,7 @@
    - [dateTime](#datetime)
    - [dismiss](#dismiss)
    - [fieldError](#fielderror-util)
+   - [fonts](#fonts)
    - [labels](#labels)
    - [legal](#legal)
    - [minimizedModals](#minimizedmodals)
@@ -120,6 +122,55 @@ npm install svelte@^5.0.0 @lucide/svelte@>=0.400.0
 ---
 
 ## Atoms
+
+### AnimatedLogo
+
+The spinning 3D MB cube in a white circle, straddling the top edge of a sign-in card.
+One component for the three sign-in screens (technician login, customer `AuthCard`,
+OAuth `AuthCard`), which used to carry the same four `<img>`s each.
+
+**Import:**
+
+```svelte
+<script>
+	import { AnimatedLogo } from '@mbsmart/ui/atoms';
+</script>
+```
+
+**Props:**
+
+| Prop        | Type       | Default     | Description                                                          |
+| ----------- | ---------- | ----------- | -------------------------------------------------------------------- |
+| `onclick`   | `function` | `undefined` | Renders a `<button>` (still `aria-hidden`, `tabindex="-1"`) for a hidden gesture |
+| `className` | `string`   | `''`        | Extra classes on the circle                                          |
+
+**Usage:**
+
+```svelte
+<Island className="relative mt-8 w-full max-w-lg overflow-visible">
+	<AnimatedLogo />
+	<!-- … -->
+</Island>
+```
+
+**Behaviour:**
+
+- **Place it inside a `relative` container.** It is `absolute -top-8`, centred, 64px
+  (52px cube) below `sm` and 80px (72px cube) from `sm` up.
+- **One download, whichever scheme.** The light and dark animations are two CSS
+  backgrounds keyed on `.dark`, not two `<img>`s: a hidden `<img>` is still fetched, a
+  background under a selector that does not match is not, and that holds on a
+  server-rendered page too. There are two files because the cube is drawn onto its
+  circle's colour (white / zinc-800) with no transparency.
+- **The files are animated WebP** in `src/assets/` (`logo-animated-light.webp` 225 KB,
+  `logo-animated-dark.webp` 189 KB), re-encoded from the GIFs in
+  `mb-branding/logo/3d-logo/` with sharp at `quality: 80, effort: 6, smartSubsample:
+  true`. They replaced two ~670 KB GIFs that every sign-in screen downloaded together.
+  Consumers import them through Vite, so they are content-hashed and cached immutably.
+  To regenerate after a logo change, encode from the GIFs (or the PNG frames) with the
+  same settings and check a frame against the source before committing.
+
+---
 
 Basic building blocks - simple, single-purpose components.
 
@@ -1093,6 +1144,12 @@ fetched file content is injected with `{@html}`, so only first-party icons under
 against `^[a-zA-Z0-9_-]+$`; any value containing slashes, dots, or other characters is
 rejected (renders the error placeholder) rather than fetched — this prevents path
 traversal and keeps the `{@html}` sink from being pointed at an unexpected URL.
+
+**Each icon is fetched once per page lifetime.** A module-level cache shares the
+markup between every instance, and concurrent mounts of the same icon share one
+request. An icon that has already loaded renders on the first frame of any later
+mount, so re-keying islands (section switch, collapse all) no longer re-requests it
+or flashes an empty box. A failed fetch is not remembered; the next mount retries.
 
 ---
 
@@ -2159,6 +2216,12 @@ While minimized:
 The order of the stack is shared state, in
 [`minimizedModals`](#minimizedmodals) — each `Modal` knows only its own slot.
 
+**Window listeners exist only while the modal is open** (minimized counts as open).
+The Escape/Tab `keydown` handler and the viewport size the chip position is computed
+from are attached on open and removed on close. Closed modals stay mounted across the
+portals, so binding them for a modal's whole life added a `keydown` handler and two
+state writes per resize for every closed one on the page.
+
 ---
 
 ### QuickLinks
@@ -2521,6 +2584,11 @@ Full-screen error page template with status code, message, bundled light/dark im
 	{/snippet}
 </ErrorPage>
 ```
+
+**Only one image is downloaded in the browser.** It renders the image for the scheme
+on screen, read from [`paintedDark`](#theme), rather than a `dark:hidden` pair (a hidden
+`<img>` is still fetched). The server cannot know the scheme, so a server-rendered error
+page keeps both images behind CSS and hydration swaps in the single one.
 
 ---
 
@@ -2978,6 +3046,38 @@ firstError(''); // undefined
 
 ---
 
+### fonts
+
+Font preloading for server-rendered pages.
+
+**Import:**
+
+```javascript
+import { fontPreload } from '@mbsmart/ui/utils';
+```
+
+#### `fontPreload(lang, { italic? })`
+
+Returns a `preload` option for SvelteKit's `resolve(event, { preload })`. It keeps the
+default JS and CSS preloads and adds the Rubik faces a page in `lang` renders:
+`Rubik-latin` always (spaces, digits and punctuation are in the Latin subset, so every
+page with text downloads it), plus `Rubik-hebrew` for `he`/`yi` or `Rubik-cyrillic` for
+`ru`, and the italic of each when `italic` is set.
+
+```typescript
+// hooks.server.ts
+return resolve(event, { preload: fontPreload(lang, { italic: true }) });
+```
+
+Without it the faces are discovered only after the stylesheet is parsed and
+`font-display: swap` paints the first text in the fallback, then reflows. Only the
+faces a page is sure to use are listed; preloading all eight would download scripts
+`unicode-range` exists to skip. `latin-ext` is left to load on demand. A client-only SPA
+shell has no route CSS to take font links from, so this only helps server-rendered and
+prerendered pages. Used by the customer portal's marketing pages and every OAuth screen.
+
+---
+
 ### labels
 
 API label to human-readable text conversions.
@@ -3196,6 +3296,7 @@ import {
 	getStoredTheme,
 	isDark,
 	prefersDark,
+	paintedDark,
 	applyTheme,
 	setTheme,
 	syncTheme,
@@ -3234,6 +3335,11 @@ import {
   its own scheme while we are on `system`, and another portal writing the cookie. The
   latter is why it listens on `visibilitychange` — a cookie fires no `storage` event, so
   a background tab is never told and has to look when it is next looked at.
+- **`paintedDark` is a readable store of what `<html>` shows**, the `dark` class
+  followed by a `MutationObserver`, not the preference, so a page holding `lockTheme`
+  reads as what it paints. It is for choosing between two assets in script when only
+  one should download (`ErrorPage`, the customer portal's Terms gate backdrop). It is
+  always `false` on the server; a server-rendered page needs CSS for the first paint.
 
 #### The pre-paint snippet — copied into each app, not imported
 
@@ -3311,14 +3417,24 @@ levenshteinDistance('test', 'test'); // 0
 
 #### `fuzzyMatch(query, target, maxDistance?)`
 
-Checks if query fuzzy-matches target within tolerance.
+Checks if query fuzzy-matches target within tolerance: some substring of the target is
+within `maxDistance` edits of the query. Queries of one or two characters only match
+exactly.
 
 ```javascript
-fuzzyMatch('gams', 'games', 1); // true (1 typo)
-fuzzyMatch('gmas', 'games', 1); // true (1 typo)
+fuzzyMatch('gams', 'games', 1); // true (1 typo: a missing letter)
+fuzzyMatch('gmas', 'games', 1); // false (a swap is 2 edits)
 fuzzyMatch('gmeas', 'games', 1); // false (2 typos)
 fuzzyMatch('gam', 'games'); // true (substring)
 ```
+
+Magic search calls this for every searchable element on every keystroke, and
+`SearchableList` for every row, so it is one pass over the target (Sellers' algorithm:
+Levenshtein with a free starting point) with reused typed arrays. Until September 2026
+it compared the query against every window of `query.length ± maxDistance`, building a
+fresh matrix for each; the answers are identical for whole-number tolerances (checked
+against 500,000 random cases) and it is about 27× faster on a device page's worth of
+terms.
 
 #### `fuzzyIncludes(query, target, typoTolerance?)`
 
