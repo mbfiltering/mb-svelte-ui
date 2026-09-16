@@ -48,6 +48,10 @@ export const labelToColorKey = {
 	'social media': 'red',
 	chats_red: 'red',
 	chats_alt: 'red',
+	// Open-ended AI chat can answer or generate anything (Sora and Grok make
+	// images and video), so it sits with Social Media rather than plain Chats.
+	'ai chats': 'red',
+	aichats: 'red',
 	mature: 'red',
 	proxies: 'red',
 	entertainment: 'red',
