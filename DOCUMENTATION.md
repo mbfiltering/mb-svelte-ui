@@ -1710,7 +1710,11 @@ on to the page behind. While there is more content above or below, that edge of
 the panel fades out (a `mask-image`, so it is theme-agnostic and never covers a
 click target). The fades are driven by two 1px sentinels and an
 `IntersectionObserver` rooted on the panel, not by a scroll handler, so they
-also follow content that grows, an `{#if}` that opens, and a resize.
+also follow content that grows, an `{#if}` that opens, and a resize. With no
+`title`, a phone-only 2rem strip sits above the panel so the bottom sheet's drag
+handle never overlaps the scroller (iOS gives a touch there to the scroller, and
+the swipe ends up scrolling the page instead of closing the sheet). Content
+needs no top padding of its own to clear the handle.
 
 **Usage:**
 

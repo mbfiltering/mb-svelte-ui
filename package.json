@@ -1,6 +1,6 @@
 {
 	"name": "@mbsmart/ui",
-	"version": "0.1.46",
+	"version": "0.1.47",
 	"private": true,
 	"description": "MB Smart UI component library for SvelteKit",
 	"type": "module",

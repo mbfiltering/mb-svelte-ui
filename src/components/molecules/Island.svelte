@@ -116,6 +116,12 @@
 				<h3 class="font-medium sm:text-lg">{title}</h3>
 			</div>
 		</div>
+	{:else if scrollBody}
+		<!-- No header, so hold the bottom sheet's drag handle (h-8, phone only) clear
+		     of the scroller. iOS hands a touch over a scroll area to that area even
+		     when the handle sits on top, and a scroller with nothing to scroll passes
+		     the swipe on to the page behind instead of closing the sheet. -->
+		<div class="h-8 shrink-0 sm:hidden" aria-hidden="true"></div>
 	{/if}
 	<!-- No header, just content -->
 	{#if scrollBody}
