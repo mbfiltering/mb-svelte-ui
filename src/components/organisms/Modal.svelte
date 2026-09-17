@@ -19,6 +19,7 @@
 		closeOnEscape = true,
 		verticalAlign = 'center', // 'top', 'center', or 'bottom'
 		overflowVisible = false,
+		innerScroll = false, // The dialog does not scroll; its child fills the height and scrolls itself (ModalIsland)
 		minimizable = false, // Show the minimize button and allow the corner chip
 		ariaLabel = '', // Names the dialog for screen readers — pass the modal's own title
 		closeLabel = 'Close modal', // aria-label/title for the close button
@@ -356,9 +357,11 @@
 			aria-label={ariaLabel || undefined}
 			inert={minimized}
 			tabindex="-1"
-			class="relative max-h-[90dvh] w-full max-w-3xl focus:outline-none {overflowVisible
-				? 'overflow-visible'
-				: 'overflow-auto'} {isDragging
+			class="relative max-h-[90dvh] w-full max-w-3xl focus:outline-none {innerScroll
+				? 'flex flex-col overflow-hidden'
+				: overflowVisible
+					? 'overflow-visible'
+					: 'overflow-auto'} {isDragging
 				? ''
 				: minimized || animating
 					? 'transition-[transform,opacity] duration-300 ease-in-out'

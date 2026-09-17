@@ -6,7 +6,8 @@
 	let { 
 		gridClasses = 'sm:grid-cols-2 lg:grid-cols-3', 
 		title = 'Quick Links',
-		links = null  // Optional: pass translated links array
+		links = null,  // Optional: pass translated links array
+		scrollBody = false // Set when the links sit in a Modal with `innerScroll`
 	} = $props();
 
 	// Default quick links data (used when links prop is not provided)
@@ -53,7 +54,12 @@
 	const quickLinks = $derived(links || defaultLinks);
 </script>
 
-<Island {title} collapsible={false}>
+<Island
+	{title}
+	{scrollBody}
+	collapsible={false}
+	className={scrollBody ? 'rounded-b-none sm:rounded-b-xl' : ''}
+>
 	<div class="grid gap-3 {gridClasses}">
 		{#each quickLinks as link}
 			<a

@@ -1695,11 +1695,22 @@ Collapsible card container with optional title and icon.
 | `collapseLabel`   | `string`    | `'Collapse'` | Header tooltip when expanded |
 | `expandLabel`     | `string`    | `'Expand'`   | Header tooltip when collapsed |
 | `className`       | `string`    | `''`    | Additional classes               |
+| `scrollBody`      | `boolean`   | `false` | Header and footer stay put and only the content scrolls, with edge fades. Needs a height-bounded flex column parent; use `ModalIsland` rather than setting it by hand |
+| `footer`          | `snippet`   | -       | Pinned under the content, for the island's actions |
 | `children`        | `snippet`   | -       | Island content                   |
 
 **Accessibility:** the header is a real button carrying `aria-expanded` and
 `aria-controls` pointing at the content panel; its accessible name is the
 `title` text. Pass `collapseLabel`/`expandLabel` to translate the tooltip.
+
+**Scrolling body (`scrollBody`):** the island becomes a flex column that can
+shrink to its parent. The header and `footer` never scroll; the content panel
+does, with `overscroll-behavior: contain` so a phone does not carry the scroll
+on to the page behind. While there is more content above or below, that edge of
+the panel fades out (a `mask-image`, so it is theme-agnostic and never covers a
+click target). The fades are driven by two 1px sentinels and an
+`IntersectionObserver` rooted on the panel, not by a scroll handler, so they
+also follow content that grows, an `{#if}` that opens, and a resize.
 
 **Usage:**
 
@@ -2123,6 +2134,7 @@ Full-screen modal overlay with backdrop.
 | `closeOnEscape`   | `boolean`                    | `true`     | Close on ESC key             |
 | `verticalAlign`   | `'top' \| 'center' \| 'bottom'` | `'center'` | Vertical placement of the modal |
 | `overflowVisible` | `boolean`                    | `false`    | When true, content uses `overflow-visible` so absolutely-positioned dropdowns are not clipped |
+| `innerScroll`     | `boolean`                    | `false`    | The dialog stops scrolling and becomes a flex column, so a child with its own scrolling body (`Island scrollBody`) fills it. Takes precedence over `overflowVisible`. `ModalIsland` sets it |
 | `minimizable`     | `boolean`                    | `false`    | Show the minimize button and allow the modal to collapse to a corner chip |
 | `ariaLabel`       | `string`                     | `''`       | Names the dialog for screen readers — pass the modal's own title |
 | `closeLabel`      | `string`                     | `'Close modal'` | Accessible name and tooltip for the X button |
@@ -2146,11 +2158,12 @@ keyboard and assistive tech.
 
 <button onclick={() => (isOpen = true)} aria-haspopup="dialog">Open Modal</button>
 
+<!-- One island in a modal: use ModalIsland (below), not this -->
 <Modal {isOpen} onClose={() => (isOpen = false)} ariaLabel="Modal Title">
-	<Island title="Modal Title">
-		<p>Modal content here</p>
-		<ControlButton onclick={() => (isOpen = false)}>Close</ControlButton>
-	</Island>
+	<section class="flex flex-col gap-4">
+		<Island title="First">...</Island>
+		<Island title="Second">...</Island>
+	</section>
 </Modal>
 
 <!-- Dropdowns that escape the modal box -->
@@ -2159,19 +2172,17 @@ keyboard and assistive tech.
 </Modal>
 
 <!-- Parkable in the corner while the user works on the page -->
-<Modal
+<ModalIsland
 	{isOpen}
 	onClose={() => (isOpen = false)}
 	minimizable
-	ariaLabel={$t('device.note')}
+	title={$t('device.note')}
 	closeLabel={$t('common.close')}
 	minimizeLabel={$t('common.minimize')}
 	maximizeLabel={$t('common.restore')}
 >
-	<Island title={$t('device.note')} collapsible={false} className="rounded-b-none sm:rounded-b-xl">
-		<!-- ... -->
-	</Island>
-</Modal>
+	<!-- ... -->
+</ModalIsland>
 ```
 
 **Behaviour:**
@@ -2224,6 +2235,68 @@ state writes per resize for every closed one on the page.
 
 ---
 
+### ModalIsland
+
+A `Modal` holding one `Island`, which is the shape nearly every dialog in the portals
+takes. The island's title bar and `footer` stay put while only its content scrolls,
+with a fade at whichever edge has more to see. **Use it for any single-island
+dialog** instead of spelling `Modal` + `Island` by hand.
+
+**Import:**
+
+```svelte
+<script>
+	import { ModalIsland } from '@mbsmart/ui/organisms';
+</script>
+```
+
+**Props:**
+
+| Prop        | Type        | Default | Description |
+| ----------- | ----------- | ------- | ----------- |
+| `title`     | `string`    | `''`    | Island title. No title means no header; the whole island scrolls |
+| `icon`      | `component` | `null`  | Lucide icon for the title |
+| `svgIcon`   | `string`    | `''`    | SVG icon name, instead of `icon` |
+| `ariaLabel` | `string`    | `''`    | Dialog name; falls back to `title`. Pass it when there is no title |
+| `footer`    | `snippet`   | -       | Actions pinned under the scrolling content |
+| `children`  | `snippet`   | -       | Island content |
+| *anything else* |         |         | Passed to `Modal` unchanged: `isOpen`, `onClose`, `minimizable`, `verticalAlign`, `showCloseButton`, the labels |
+
+**Usage:**
+
+```svelte
+<ModalIsland
+	{isOpen}
+	{onClose}
+	title={$t('device.appTimerTitle')}
+	icon={Timer}
+	closeLabel={$t('common.close')}
+>
+	<MinutesInput bind:value={minutes} label={$t('device.pauseForMinutes')} />
+
+	{#snippet footer()}
+		<div class="flex justify-end gap-3">
+			<ControlButton onclick={save} color="orange" size="md">{$t('device.setTimer')}</ControlButton>
+		</div>
+	{/snippet}
+</ModalIsland>
+```
+
+**Behaviour:**
+
+- The island is always `collapsible={false}` with the bottom-sheet corners
+  (`rounded-b-none sm:rounded-b-xl`); callers do not pass either.
+- Put the dialog's main action row in `footer` so it stays reachable on a short
+  screen. Buttons that belong to one branch of the content (a step, an error
+  state) can stay in the body.
+- The content panel scrolls, so an absolutely positioned popover inside it is
+  clipped at the panel's edges. Native `<select>` and `OneFromMany` are fine.
+  A dialog that needs a menu to escape uses `Modal` with `overflowVisible`.
+- It is thin on purpose. A dialog with two islands, or content beside the
+  island, uses `Modal` and `Island` directly; do not grow props here for it.
+
+---
+
 ### QuickLinks
 
 Grid of quick link cards with icons.
@@ -2241,6 +2314,9 @@ Grid of quick link cards with icons.
 | Prop          | Type     | Default                           | Description         |
 | ------------- | -------- | --------------------------------- | ------------------- |
 | `gridClasses` | `string` | `'sm:grid-cols-2 lg:grid-cols-3'` | Grid column classes |
+| `title`       | `string` | `'Quick Links'`                   | Island title        |
+| `links`       | `array`  | `null`                            | Translated links; falls back to the English defaults |
+| `scrollBody`  | `boolean`| `false`                           | Set when shown in a `Modal` with `innerScroll`, so the title stays put and the links scroll |
 
 **Usage:**
 

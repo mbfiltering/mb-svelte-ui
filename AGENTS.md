@@ -148,7 +148,7 @@ src/
 │   ├── index.js          # Barrel export for all components
 │   ├── atoms/            # Basic building blocks (Button, Badge, Input, NavDropdown, etc.)
 │   ├── molecules/        # Composite components (Grid, Island, NamedControl, PageHeader, Tabs)
-│   ├── organisms/        # Complex components (Modal, SearchableList, ToastContainer)
+│   ├── organisms/        # Complex components (Modal, ModalIsland, SearchableList, ToastContainer)
 │   └── templates/        # Page-level layouts (AppShell, SectionedPage)
 ├── fonts/                # Rubik (OFL) — WOFF2 subsets, one family for every
 │                         #   script, declared in styles.css.
@@ -162,7 +162,7 @@ src/
 |-------------|--------------------------------------|-----------------------------------|
 | **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, Spinner, TextInput |
 | **Molecules** | Composed of atoms, reusable groups | Field, Grid, HeaderNav, Island, MultiInput, PageHeader |
-| **Organisms** | Complex, self-contained features   | Modal, SearchableList, TermsContent, ToastContainer |
+| **Organisms** | Complex, self-contained features   | Modal, ModalIsland, SearchableList, TermsContent, ToastContainer |
 | **Templates** | Page layouts and shells            | AppShell, SectionedPage           |
 
 ### Magic search and lists
@@ -328,6 +328,35 @@ unrelated things depending on which product you were looking at. Keep the split:
   technician goes home, and `ListCard` reloads for the same kind of clean start; a
   client-side chip would change where "Go back" lands afterwards. It is not free
   (a re-boot of the SPA), so revisit it with the navigation, not as a one-line tweak.
+
+## Dialogs — one island, one `ModalIsland`
+
+Nearly every dialog in the portals is a `Modal` holding one `Island`, and about thirty
+of them spelled that pair out by hand with the same `collapsible={false}` and
+`rounded-b-none sm:rounded-b-xl`. They also all scrolled the *dialog*, so a long one
+carried its title bar and close button up and off the screen, and on a phone nothing
+said the content went on past the fold. `ModalIsland` is that pair, with the title
+bar and an optional `footer` pinned and only the content scrolling, fading at
+whichever edge has more.
+
+- **A single-island dialog uses `ModalIsland`.** `Modal` + `Island` by hand is for the
+  dialogs that are genuinely something else: two islands, content beside the island,
+  the `SectionedPage` overflow sheet.
+- **Keep it thin.** Island props it owns (`title`, `icon`, `svgIcon`, `footer`), and
+  everything else passes through to `Modal`. When a dialog needs more, it does not
+  fit the shape; use the primitives rather than adding a prop.
+- **The height chain is the mechanism.** `Modal innerScroll` makes the dialog a
+  bounded flex column, `Island scrollBody` a shrinkable one with the panel as the
+  scroller. Wrap the island in any other element inside the modal and `min-h-0`
+  stops reaching it: the island grows past the dialog and gets clipped instead of
+  scrolling.
+- **The fades are a mask, driven by sentinels.** Two 1px sentinels at the ends of the
+  panel and an `IntersectionObserver` rooted on it, the same reasoning as
+  `PageHeader`'s sentinel: no scroll handler, and it also notices content growing.
+  A white gradient overlay was considered and rejected, since it has to be recoloured
+  per theme and sits over the last row's click targets.
+- **The panel clips.** An absolutely positioned popover inside a `ModalIsland` is cut
+  at the panel's edges. Native `<select>` (and `OneFromMany`, which is one) is not.
 
 ## The page header — one block, two states
 
