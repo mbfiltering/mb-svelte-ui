@@ -58,6 +58,11 @@
 		// being searched for — e.g. to widen `items` beyond the category it is
 		// currently showing while a query is active — or clear it.
 		searchQuery = $bindable(''),
+		// Anything the parent narrows `items` by from outside (its own tabs, a
+		// category picker). A change sends the list back to page 1, like the
+		// built-in search and filter tabs do. `items` itself is not watched, so
+		// a refetch of the same view keeps the page it is on.
+		resetKey = undefined,
 		// i18n text props
 		ofText = 'of', // "of" text for "X of Y items"
 		selectedText = 'selected', // "selected" text for bulk mode
@@ -113,11 +118,12 @@
 		containerMatched ? searchQuery : externalQuery.trim() || searchQuery
 	);
 
-	// Reset to page 1 and collapse show-all when search or filter changes
+	// Reset to page 1 and collapse show-all when search, filter or resetKey changes
 	$effect(() => {
 		// track dependencies
 		void effectiveQuery;
 		void activeFilter;
+		void resetKey;
 		currentPage = 1;
 		showAll = false;
 	});

@@ -2391,6 +2391,7 @@ Searchable, filterable list with optional bulk selection.
 | `externalQuery`     | `string`  | `''`               | Supplied search query from outside (e.g. SectionedPage magic search). Filters rows for **item** hits. |
 | `containerTerms`    | `string`  | `''`               | The enclosing island's `data-magicsearch` string. When `externalQuery` matches these terms, rows are **not** filtered — the island itself is the hit. Omit to fall back to the closest `.magicsearch-island` after mount. |
 | `searchQuery`       | `string`  | `''`               | The built-in search box's text. Bindable — a parent can read what is being searched for (e.g. to widen `items` beyond the category it is showing while a query is active) or clear it |
+| `resetKey`          | `any`     | `undefined`        | Whatever the parent narrows `items` by from outside (its own tabs, a category picker). A change sends the list back to page 1, as the built-in search and filter tabs do. `items` itself is not watched, so a refetch of the same view keeps its page |
 | `ofText`            | `string`  | `'of'`             | i18n "of" text                   |
 | `selectedText`      | `string`  | `'selected'`       | i18n "selected" text             |
 | `pageText`          | `string`  | `'Page'`           | i18n "Page" label                |
