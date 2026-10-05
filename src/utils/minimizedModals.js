@@ -69,4 +69,41 @@ export function minimizeOthers(id) {
 	}
 }
 
+/**
+ * Every open, maximized `Modal`, in the order it came up; the last is on top.
+ *
+ * Modals can stack (a popup opened from inside another), and each binds Escape
+ * and Tab to the window. Without this, one Escape closed both and the lower
+ * one's focus trap pulled focus out of the upper. Only the top one answers.
+ *
+ * @type {string[]}
+ */
+const activeModals = [];
+
+/**
+ * Put a modal on top of the stack: it has opened, or been restored.
+ * @param {string} id
+ */
+export function pushActive(id) {
+	removeActive(id);
+	activeModals.push(id);
+}
+
+/**
+ * Take a modal out of the stack: it has closed, or been minimized.
+ * @param {string} id
+ */
+export function removeActive(id) {
+	const index = activeModals.indexOf(id);
+	if (index !== -1) activeModals.splice(index, 1);
+}
+
+/**
+ * Whether this modal is the one on top, and so the one keys belong to.
+ * @param {string} id
+ */
+export function isTopActive(id) {
+	return activeModals.at(-1) === id;
+}
+
 export default minimizedModals;

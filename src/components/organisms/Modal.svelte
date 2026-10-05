@@ -7,7 +7,10 @@
 		unregisterMinimized,
 		registerOpen,
 		unregisterOpen,
-		minimizeOthers
+		minimizeOthers,
+		pushActive,
+		removeActive,
+		isTopActive
 	} from '../../utils/minimizedModals.js';
 
 	// Props - Svelte 5 style
@@ -158,6 +161,8 @@
 		// A minimized modal has handed the page back to the user: it neither traps
 		// Tab nor answers Escape.
 		if (minimized) return;
+		// A modal opened on top of this one has the keys until it closes.
+		if (!isTopActive(uid)) return;
 		if (closeOnEscape && event.key === 'Escape') {
 			onClose();
 			return;
@@ -254,6 +259,14 @@
 		if (!isOpen || !minimized) return;
 		registerMinimized(uid);
 		return () => unregisterMinimized(uid);
+	});
+
+	// On the stack of modals that answer keys for as long as it is open and up;
+	// the most recently opened or restored one is on top.
+	$effect(() => {
+		if (!isOpen || minimized) return;
+		pushActive(uid);
+		return () => removeActive(uid);
 	});
 
 	// Reachable from a sibling for as long as this modal is open and can minimize.

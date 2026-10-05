@@ -2231,6 +2231,13 @@ While minimized:
 The order of the stack is shared state, in
 [`minimizedModals`](#minimizedmodals) — each `Modal` knows only its own slot.
 
+**Stacked modals: only the top one answers keys.** A modal opened while another
+is up (a popup opened from a popup, or the portal's Help popup over any popup) is
+on top until it closes, and only it handles Escape and the Tab trap; one Escape
+closes one modal. The order is the most recently opened or restored first
+(`pushActive` / `removeActive` / `isTopActive` in `minimizedModals.js`), and a
+minimized modal drops out of it.
+
 **Window listeners exist only while the modal is open** (minimized counts as open).
 The Escape/Tab `keydown` handler and the viewport size the chip position is computed
 from are attached on open and removed on close. Closed modals stay mounted across the
