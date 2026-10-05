@@ -2321,6 +2321,12 @@ Grid of quick link cards with icons.
 | `title`       | `string` | `'Quick Links'`                   | Island title        |
 | `links`       | `array`  | `null`                            | Translated links; falls back to the English defaults |
 | `scrollBody`  | `boolean`| `false`                           | Set when shown in a `Modal` with `innerScroll`, so the title stays put and the links scroll |
+| `newTabLabel` | `string` | `'Open in a new tab'`             | Translated name of the new-tab button on a same-tab link |
+
+Each link is `{ name, url, icon, description, newTab? }`. Links open in a new
+tab. A link with `newTab: false` (a page of the host app itself) opens in place
+and gets a new-tab button (`ExternalLink` icon) at its end instead; the two are
+sibling links, never one inside the other.
 
 **Usage:**
 
