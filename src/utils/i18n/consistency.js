@@ -12,7 +12,7 @@
  * catalogs it can see and calls `runChecks`.
  *
  * An entry is `{ catalog, locale, key, value }`. `catalog` is the short name an
- * exception file refers to: `portal`, `customer`, `oauth`, `brochure`.
+ * exception file refers to: `portal`, `customer`, `oauth`, `ui`, `brochure`.
  *
  * @see mb-specs/dev-resources/STYLE-GUIDE.md
  * @see mb-specs/dev-resources/i18n-exceptions.json

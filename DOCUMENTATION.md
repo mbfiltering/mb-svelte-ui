@@ -34,7 +34,9 @@
    - [NavButton](#navbutton)
 	- [NavDropdown](#navdropdown)
    - [OneFromMany](#onefrommany)
+   - [QrCode](#qrcode)
    - [RadioButton](#radiobutton)
+   - [RichText](#richtext)
    - [SafetyBadge](#safetybadge)
    - [SingleInput](#singleinput)
    - [Skeleton](#skeleton)
@@ -57,6 +59,7 @@
    - [PageHeader](#pageheader)
    - [Tabs](#tabs)
 4. [Organisms (Complex Components)](#organisms)
+   - [InstallWalkthrough](#installwalkthrough)
    - [Modal](#modal)
    - [QuickLinks](#quicklinks)
    - [SearchableList](#searchablelist)
@@ -72,6 +75,7 @@
    - [dismiss](#dismiss)
    - [fieldError](#fielderror-util)
    - [fonts](#fonts)
+   - [install](#install)
    - [labels](#labels)
    - [legal](#legal)
    - [minimizedModals](#minimizedmodals)
@@ -881,6 +885,29 @@ and untabbable so the `<select>` is the single control.
 
 ---
 
+### QrCode
+
+A value drawn as a QR code: inline SVG built from `qrcode-generator`'s module
+matrix, one `<path>`, no `{@html}`. **Always dark-on-white with a white quiet
+zone, in both colour schemes**, because many scanners refuse an inverted code.
+Scales to its box, so size it with the wrapper (`max-w-60`).
+
+```svelte
+<script>
+	import { QrCode } from '@mbsmart/ui/atoms';
+</script>
+
+<div class="mx-auto max-w-60"><QrCode value={link} label="QR code for enrolling this device" /></div>
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `value` | `string` | What the code encodes |
+| `label` | `string` | Accessible name: what the code *is*, not its value |
+| `className` | `string` | Extra classes on the `<svg>` |
+
+---
+
 ### RadioButton
 
 Custom radio button with azure-700 styling.
@@ -913,6 +940,19 @@ Custom radio button with azure-700 styling.
 	checked={priority === 'high'}
 	onchange={() => (priority = 'high')}
 />
+```
+
+---
+
+### RichText
+
+One translated line with its `**bold**` spans drawn as `<strong>`. Markers rather
+than markup, because six hand-edited locales and `{@html}` do not mix: a stray
+`**` is a visible pair of asterisks, never broken layout. Emits spans and no
+wrapper, so the caller keeps its own element.
+
+```svelte
+<li><RichText text={$t('DeviceInstall.step_install_app_1')} /></li>
 ```
 
 ---
@@ -2115,6 +2155,51 @@ search spans every tab".
 
 Complex components with significant functionality.
 
+### InstallWalkthrough
+
+The iOS v2 install walkthrough, one step at a time: a progress bar whose phrase is
+a heading, the step on screen, and a control row (Back, a done mark, "I've done
+this" or Next). **One component for both portals**: the customer portal renders it
+as its `/install` page, the technician portal in the "iOS v2 setup" popup. The
+steps and their order are data in `@mbsmart/ui/install` (`installStepsFor`), and
+its copy is the `DeviceInstall` namespace, which ships with this package as six
+locale files and loads itself (see [install](#install)).
+
+It **watches the device itself**: `api.getStatus()` on arrival and on a clock,
+5 s while the step on screen waits on the device and 15 s otherwise, never behind
+a hidden tab, and not at all once every step is done; on the adult path also
+`api.getProfileStatus()` until the profile is in. A step the device proves ticks
+itself; the rest are ticked by hand and remembered per device in localStorage.
+
+```svelte
+<script>
+	import { InstallWalkthrough } from '@mbsmart/ui/organisms';
+
+	const api = {
+		getStatus: () => getStatus(deviceId), // GET /device/{id}/status
+		getProfileStatus: () => getProfileStatus(deviceId), // null on 404
+		getLink: async (kind) => ({ link: await mint(kind) }) // 'enroll' | 'profile'
+	};
+</script>
+
+<InstallWalkthrough {deviceId} deviceType="ios" {devicePin} {api} doneLabel="Close" onDone={close} />
+```
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `deviceId`, `deviceType` | `string` | | The device. Only Apple types have steps |
+| `devicePin` | `string` | `''` | Named on the filter step |
+| `initialStatus` | `object | null` | `null` | First paint, before the first poll |
+| `api` | `{ getStatus, getProfileStatus, getLink }` | | How this portal reaches core. `getLink` resolves `{ link, expiresAt? }` and rejects with an error carrying `status` (404: not there, 403: refused) |
+| `doneLabel` | `string` | | The summary's button, translated |
+| `onDone` | `() => void` | | |
+| `headingLevel` | `1 | 2` | `1` | Of the progress phrase; step titles sit one below |
+| `closeHint` | `boolean` | `false` | Say on the summary that the tab can be closed |
+| `showCopy` | `boolean` | `false` | "Copy link" under each QR, for someone sending it on |
+| `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
+
+---
+
 ### Modal
 
 Full-screen modal overlay with backdrop.
@@ -3169,6 +3254,28 @@ faces a page is sure to use are listed; preloading all eight would download scri
 `unicode-range` exists to skip. `latin-ext` is left to load on demand. A client-only SPA
 shell has no route CSS to take font links from, so this only helps server-rendered and
 prerendered pages. Used by the customer portal's marketing pages and every OAuth screen.
+
+---
+
+### install
+
+`@mbsmart/ui/install`: the walkthrough's logic, for a host that needs a piece of it
+without the component.
+
+- `installStepsFor(deviceType, accountKind)` and `hasInstallSteps(deviceType)`.
+  The order is link first and profile last: every device redeems an enrolment code
+  straight after the app is installed, so the portal hears from it for the rest of
+  the setup; an adult device installs its profile last.
+- Progress in localStorage, per origin and per device: `getAttestedSteps`,
+  `getInstallAccount`, `isInstallFinished`, `wasRegisteredInConfigMode` /
+  `markRegisteredInConfigMode`, and `rememberConfigLink` /
+  `getRememberedConfigLink` for the profile link a create response hands out once.
+- Links: `buildEnrollLink` (`mbsmart://` only), `buildConfigLink` (`https://`
+  only), `isAppleMobileBrowser`, `APP_STORE_URL`, `DEVICE_PORTAL_URL`.
+- `loadInstallTranslations(lang)`: registers the `DeviceInstall` copy for a
+  language (after the app's own chunk, so `loadLanguage` still fetches that). The
+  component calls it itself. The six files are `src/utils/install/translations/`,
+  read by the estate's i18n consistency check as the `ui` catalog.
 
 ---
 

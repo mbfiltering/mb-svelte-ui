@@ -38,6 +38,14 @@ export const CATALOGS = [
 		pick: (m) => m.default
 	},
 	{
+		// This package's own locale-first copy: the iOS install walkthrough, which
+		// both the customer and the technician portal render.
+		id: 'ui',
+		repo: 'mb-svelte-ui',
+		dir: 'src/utils/install/translations',
+		pick: (m) => m.translations
+	},
+	{
 		id: 'brochure',
 		repo: 'mb-branding',
 		dir: 'marketing/brochure/brochure-strings',

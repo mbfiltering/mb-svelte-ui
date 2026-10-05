@@ -149,20 +149,23 @@ src/
 │   ├── atoms/            # Basic building blocks (Button, Badge, Input, NavDropdown, etc.)
 │   ├── molecules/        # Composite components (Grid, Island, NamedControl, PageHeader, Tabs)
 │   ├── organisms/        # Complex components (Modal, ModalIsland, SearchableList, ToastContainer)
+│   │   └── install/      # The iOS install walkthrough (InstallWalkthrough and its parts)
 │   └── templates/        # Page-level layouts (AppShell, SectionedPage)
 ├── fonts/                # Rubik (OFL) — WOFF2 subsets, one family for every
 │                         #   script, declared in styles.css.
 │                         #   See "Fonts" below before adding or removing a face.
 └── utils/                # Helper functions (dateTime, stringUtils, toastStore, etc.)
+    └── install/          # The walkthrough's steps, links, progress and its own six-locale copy
+                          #   (exported as `@mbsmart/ui/install`)
 ```
 
 ### Component Hierarchy (Atomic Design)
 
 | Layer       | Purpose                              | Examples                          |
 |-------------|--------------------------------------|-----------------------------------|
-| **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, Spinner, TextInput |
+| **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, QrCode, RichText, Spinner, TextInput |
 | **Molecules** | Composed of atoms, reusable groups | Field, Grid, HeaderNav, Island, MultiInput, PageHeader |
-| **Organisms** | Complex, self-contained features   | Modal, ModalIsland, SearchableList, TermsContent, ToastContainer |
+| **Organisms** | Complex, self-contained features   | InstallWalkthrough, Modal, ModalIsland, SearchableList, TermsContent, ToastContainer |
 | **Templates** | Page layouts and shells            | AppShell, SectionedPage           |
 
 ### Magic search and lists
@@ -508,6 +511,36 @@ Things worth knowing before touching this:
 - **`getAvailableLanguages()` reports what is in memory**, which with locale-first data is
   only the loaded chunks. Use `SUPPORTED_LANGUAGES` (or `getRegisteredLocales()`) to
   enumerate what an app offers.
+
+---
+
+## The iOS install walkthrough — one flow, two portals
+
+`components/organisms/install/` and `utils/install/` are the iOS v2 install
+walkthrough (October 2026). It lives here because MHomsany asked for "the exact
+same flow" in the customer portal (its `/install` page) and the technician portal
+(the "iOS v2 setup" popup on an iOS device), and two copies of ~120 strings and a
+pager this subtle would drift. The reasoning behind the steps and their wording is
+in `mb-specs/tasks/ios-v2/`; read `ios-v2-status.md` there before changing a step.
+
+- **The host passes `api`, nothing else about core.** The two portals reach the same
+  credentials by different routes (the customer token for the enrolment code and a
+  profile link kept from creation; the technician portal signs in as the device), so
+  the component never names a route. Keep it that way.
+- **Link first, profile last.** Every device redeems an enrolment code straight after
+  the app is installed; its first heartbeat stamps `status.last_sync`, which is what
+  the link step and everything after it watch. Moving the link step later throws away
+  the reason for the order.
+- **Its copy is this package's own locale-first catalog**,
+  `utils/install/translations/{lang}.js`, loaded by `loadInstallTranslations` *after*
+  the app's chunk for that language (registering first would make `loadLanguage`
+  skip the app's chunk). It is the `ui` catalog in `consistencyLoader.js`, so the
+  em-dash and same-English rules cover it; its exceptions in
+  `mb-specs/dev-resources/i18n-exceptions.json` are addressed `ui:DeviceInstall.*`.
+  Adding a key is a six-file edit here, and no app may re-author a `DeviceInstall`
+  key, for the reason given under i18n above.
+- **localStorage keys are shared with the pre-move customer portal** and must not be
+  renamed, or walkthroughs in progress lose their place.
 
 ---
 
