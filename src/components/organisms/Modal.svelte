@@ -24,6 +24,7 @@
 		overflowVisible = false,
 		innerScroll = false, // The dialog does not scroll; its child fills the height and scrolls itself (ModalIsland)
 		minimizable = false, // Show the minimize button and allow the corner chip
+		wide = false, // max-w-5xl instead of max-w-3xl, for a dialog built around a video or a table
 		ariaLabel = '', // Names the dialog for screen readers — pass the modal's own title
 		closeLabel = 'Close modal', // aria-label/title for the close button
 		minimizeLabel = 'Minimize modal', // aria-label/title for the minimize button
@@ -370,7 +371,9 @@
 			aria-label={ariaLabel || undefined}
 			inert={minimized}
 			tabindex="-1"
-			class="relative max-h-[90dvh] w-full max-w-3xl focus:outline-none {innerScroll
+			class="relative max-h-[90dvh] w-full {wide
+				? 'max-w-5xl'
+				: 'max-w-3xl'} focus:outline-none {innerScroll
 				? 'flex flex-col overflow-hidden'
 				: overflowVisible
 					? 'overflow-visible'

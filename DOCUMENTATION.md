@@ -2225,6 +2225,7 @@ Full-screen modal overlay with backdrop.
 | `overflowVisible` | `boolean`                    | `false`    | When true, content uses `overflow-visible` so absolutely-positioned dropdowns are not clipped |
 | `innerScroll`     | `boolean`                    | `false`    | The dialog stops scrolling and becomes a flex column, so a child with its own scrolling body (`Island scrollBody`) fills it. Takes precedence over `overflowVisible`. `ModalIsland` sets it |
 | `minimizable`     | `boolean`                    | `false`    | Show the minimize button and allow the modal to collapse to a corner chip |
+| `wide`            | `boolean`                    | `false`    | `max-w-5xl` (1024px) instead of `max-w-3xl` (768px), for a dialog built around a video or a wide table. `ModalIsland` passes it through |
 | `ariaLabel`       | `string`                     | `''`       | Names the dialog for screen readers — pass the modal's own title |
 | `closeLabel`      | `string`                     | `'Close modal'` | Accessible name and tooltip for the X button |
 | `minimizeLabel`   | `string`                     | `'Minimize modal'` | Accessible name and tooltip for the minimize button |
