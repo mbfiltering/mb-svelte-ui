@@ -118,6 +118,11 @@ export const translations = {
 		step_filter_on_pin: "אם הוא מבקש PIN, זה ה-PIN של המכשיר שהגדרתם: **{pin}**",
 		step_filter_on_pin_unknown: "אם הוא מבקש PIN, זה ה-PIN של המכשיר. תמצאו אותו בעמוד של המכשיר הזה, תחת פרטים.",
 		step_filter_on_2: "אם ה-iPhone או ה-iPad שואל אם MB Smart Protect יכולה לסנן תוכן רשת, הקישו על אפשר. שימו לב: הכפתור הכחול מימין אומר אל תאפשר.",
+		step_supervise_body_tech: "מכשיר עם חשבון Apple של מבוגר חייב להיות בפיקוח כדי ש-MB Smart יישאר קבוע עליו.",
+		step_supervise_2_tech: "חברו את המכשיר למחשב Mac והעבירו אותו לפיקוח.",
+		step_supervise_3_tech: "כשהמכשיר יופעל מחדש, שחזרו אותו מהגיבוי שלו ב-iCloud וחזרו לכאן.",
+		step_filter_on_1_tech: "לחצו על **הפעל הגנה**, כפתור ההפעלה ליד מצב ההגנה בראש העמוד של המכשיר הזה.",
+		step_filter_on_note_tech: "**Update Rules**, הכפתור הכחול באפליקציה, לא מפעיל את הסינון. רק **הפעל הגנה** מפעיל אותו.",
 		close: "סגירה",
 		copy_link: "העתקת הקישור",
 		link_copied: "הקישור הועתק ללוח"

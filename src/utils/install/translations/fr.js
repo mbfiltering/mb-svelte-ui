@@ -118,6 +118,11 @@ export const translations = {
 		step_filter_on_pin: "S'il demande un PIN, c'est le PIN de l'appareil que vous avez défini : **{pin}**",
 		step_filter_on_pin_unknown: "S'il demande un PIN, c'est le PIN de l'appareil. Vous le trouverez sur la page de cet appareil, sous Détails.",
 		step_filter_on_2: "Si l'iPhone ou l'iPad demande si MB Smart Protect peut filtrer le contenu réseau, touchez Autoriser. Attention : le bouton bleu à droite dit Refuser.",
+		step_supervise_body_tech: "Un appareil utilisant un compte Apple adulte doit être supervisé pour que MB Smart puisse y tenir en place.",
+		step_supervise_2_tech: "Branchez l'appareil sur un Mac et supervisez-le.",
+		step_supervise_3_tech: "Au redémarrage de l'appareil, restaurez sa sauvegarde iCloud, puis revenez ici.",
+		step_filter_on_1_tech: "Appuyez sur **Activer la protection**, le bouton lecture à côté de l'état de la protection, en haut de la page de cet appareil.",
+		step_filter_on_note_tech: "**Update Rules**, le bouton bleu de l'app, n'active pas le filtre. Seul **Activer la protection** le fait.",
 		close: "Fermer",
 		copy_link: "Copier le lien",
 		link_copied: "Lien copié dans le presse-papiers"

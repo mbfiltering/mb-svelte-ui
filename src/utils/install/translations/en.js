@@ -118,6 +118,11 @@ export const translations = {
 		step_filter_on_pin: "If it asks for a PIN, that is the device PIN which you set: **{pin}**",
 		step_filter_on_pin_unknown: "If it asks for a PIN, that is the device PIN. You will find it on this device’s page, under Details.",
 		step_filter_on_2: "If the iPhone or iPad asks whether MB Smart Protect can filter network content, tap Allow. Careful: the blue button on the right says Don’t Allow.",
+		step_supervise_body_tech: "A device on an adult Apple Account has to be supervised before MB Smart can hold on to it.",
+		step_supervise_2_tech: "Connect the device to a Mac and supervise it.",
+		step_supervise_3_tech: "When the device restarts, restore it from its iCloud backup, then come back here.",
+		step_filter_on_1_tech: "Press **Enable protection**, the play button beside the protection status at the top of this device’s page.",
+		step_filter_on_note_tech: "**Update Rules**, the blue button in the app, does not turn the filter on. Only **Enable protection** does.",
 		close: "Close",
 		copy_link: "Copy link",
 		link_copied: "Link copied to clipboard"

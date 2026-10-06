@@ -2196,6 +2196,7 @@ itself; the rest are ticked by hand and remembered per device in localStorage.
 | `headingLevel` | `1 | 2` | `1` | Of the progress phrase; step titles sit one below |
 | `closeHint` | `boolean` | `false` | Say on the summary that the tab can be closed |
 | `showCopy` | `boolean` | `false` | "Copy link" under each QR, for someone sending it on |
+| `audience` | `'customer' | 'technician'` | `'customer'` | `technician` drops the lines about MB Smart support, the time it takes and the device portal, and says to turn the filter on with **Enable protection** |
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
 
 ---

@@ -47,6 +47,9 @@
 	 * @prop {1 | 2} [headingLevel] Of the progress phrase; step titles sit one below.
 	 * @prop {boolean} [closeHint] Say on the summary that the tab can be closed.
 	 * @prop {boolean} [showCopy] Offer "Copy link" under each QR code.
+	 * @prop {'customer' | 'technician'} [audience] Who reads it. `technician`
+	 *   drops the lines that send the reader to MB Smart support, the time it takes
+	 *   and the device portal; see `installStepsFor`.
 	 */
 	import { onMount, tick } from 'svelte';
 	import { BadgeCheck, ChevronLeft, ChevronRight } from '@lucide/svelte';
@@ -81,7 +84,8 @@
 		headingLevel = 1,
 		closeHint = false,
 		showCopy = false,
-		framed = true
+		framed = true,
+		audience = 'customer'
 	} = $props();
 
 	const FAST_POLL_MS = 5_000;
@@ -111,7 +115,7 @@
 		}
 	});
 
-	const steps = $derived(installStepsFor(deviceType, accountKind));
+	const steps = $derived(installStepsFor(deviceType, accountKind, audience));
 	const evidence = $derived({ status, profile: profile ?? null });
 
 	const stepStates = $derived(
@@ -253,7 +257,7 @@
 		accountKind = kind;
 		setInstallAccount(deviceId, kind);
 		if (!readingId) return;
-		const next = installStepsFor(deviceType, kind).findIndex((step) => step.id === readingId);
+		const next = installStepsFor(deviceType, kind, audience).findIndex((step) => step.id === readingId);
 		if (next !== -1) viewIndex = next;
 	}
 

@@ -390,19 +390,82 @@ const FILTER_ON_STEP = {
 };
 
 /**
+ * @typedef {'customer' | 'technician'} InstallAudience Who is reading. The
+ *   technician portal's popup is read by the person the customer's copy tells to
+ *   go and find: an MB Smart technician.
+ */
+
+/** Drop a line, or give the technician one of their own. */
+const forTechnician = (/** @type {string[]} */ keys, /** @type {string[]} */ drop) =>
+	keys.filter((key) => !drop.includes(key)).map((key) => TECHNICIAN_LINES[key] ?? key);
+
+/**
+ * Lines the technician reads differently. The customer's copy sends them to MB
+ * Smart support, to the device portal and through an hour's warning; the
+ * technician is that support, turns the filter on from the page behind the popup,
+ * and knows how long it takes (the owner, 2026-10-06).
+ */
+const TECHNICIAN_LINES = /** @type {Record<string, string>} */ ({
+	'DeviceInstall.step_supervise_body': 'DeviceInstall.step_supervise_body_tech',
+	'DeviceInstall.step_supervise_2': 'DeviceInstall.step_supervise_2_tech',
+	'DeviceInstall.step_supervise_3': 'DeviceInstall.step_supervise_3_tech',
+	'DeviceInstall.step_filter_on_1': 'DeviceInstall.step_filter_on_1_tech',
+	'DeviceInstall.step_filter_on_note': 'DeviceInstall.step_filter_on_note_tech'
+});
+
+/** What the technician does not need: support, the time, the device portal PIN. */
+const TECHNICIAN_DROPS = [
+	'DeviceInstall.step_prereq_adult_1',
+	'DeviceInstall.step_prereq_adult_3',
+	'DeviceInstall.step_prereq_child_3',
+	PIN_LINE.key
+];
+
+/**
+ * @param {InstallStep} step
+ * @returns {InstallStep}
+ */
+function technicianStep(step) {
+	const next = { ...step };
+	if (step.instructionKeys) next.instructionKeys = forTechnician(step.instructionKeys, TECHNICIAN_DROPS);
+	if (step.bodyKey) next.bodyKey = TECHNICIAN_LINES[step.bodyKey] ?? step.bodyKey;
+	if (step.question) {
+		const options = /** @type {Record<InstallAccountKind, InstallAccountOption>} */ ({});
+		for (const [kind, option] of Object.entries(step.question.options)) {
+			const { noteKey: _note, ...rest } = option;
+			options[/** @type {InstallAccountKind} */ (kind)] = {
+				...rest,
+				instructionKeys: forTechnician(option.instructionKeys, TECHNICIAN_DROPS)
+			};
+		}
+		next.question = { ...step.question, options };
+	}
+	// The supervise note only said "contact support"; the filter note keeps its
+	// warning about Update Rules. The filter is turned on from the technician
+	// portal, so the device portal button goes.
+	if (step.id === 'supervise') delete next.noteKey;
+	else if (step.noteKey) next.noteKey = TECHNICIAN_LINES[step.noteKey] ?? step.noteKey;
+	if (step.id === 'filter_on') delete next.link;
+	return next;
+}
+
+/**
  * The procedure for a device, or an empty list where there is none. An
  * unanswered question gets the shorter (child-shaped) list; answering adult
  * inserts supervision and the profile.
  *
  * @param {string | undefined | null} deviceType
  * @param {InstallAccountKind | null} [accountKind]
+ * @param {InstallAudience} [audience]
  * @returns {InstallStep[]}
  */
-export function installStepsFor(deviceType, accountKind) {
+export function installStepsFor(deviceType, accountKind, audience = 'customer') {
 	if (!hasInstallSteps(deviceType)) return [];
 	const head = [SETUP_KIND_STEP, PREREQUISITES_STEP];
 	const middle = [INSTALL_APP_STEP, LINK_STEP, EXTENSION_STEP, APP_SETUP_STEP];
-	return accountKind === 'adult'
-		? [...head, SUPERVISE_STEP, ...middle, PROFILE_STEP, FILTER_ON_STEP]
-		: [...head, ...middle, FILTER_ON_STEP];
+	const steps =
+		accountKind === 'adult'
+			? [...head, SUPERVISE_STEP, ...middle, PROFILE_STEP, FILTER_ON_STEP]
+			: [...head, ...middle, FILTER_ON_STEP];
+	return audience === 'technician' ? steps.map(technicianStep) : steps;
 }
