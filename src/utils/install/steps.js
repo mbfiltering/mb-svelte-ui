@@ -281,6 +281,11 @@ const LINK_STEP = {
  * extension's own stamp would tick this with All Websites left on Ask, which is
  * the case the step exists to catch, so it stays the person's word.
  *
+ * It also has the person trust certificates (MHomsany, 2026-10-06: they can do it
+ * any time, but it belongs in the flow): a root certificate that arrives by hand
+ * is not trusted for SSL until it is turned on under Certificate Trust Settings
+ * (support.apple.com/102390). It is in Settings too, so it rides along here.
+ *
  * @type {InstallStep}
  */
 const EXTENSION_STEP = {
@@ -290,7 +295,9 @@ const EXTENSION_STEP = {
 	instructionKeys: [
 		'DeviceInstall.step_extension_1',
 		'DeviceInstall.step_extension_2',
-		'DeviceInstall.step_extension_3'
+		'DeviceInstall.step_extension_3',
+		'DeviceInstall.step_extension_4',
+		'DeviceInstall.step_extension_5'
 	],
 	confirm: 'attest'
 };
