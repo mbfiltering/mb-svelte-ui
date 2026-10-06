@@ -125,6 +125,8 @@ export const translations = {
 		step_filter_on_note_tech: "**Update Rules**, el botón azul de la app, no activa el filtro. Solo lo activa **Activar protección**.",
 		close: "Cerrar",
 		copy_link: "Copiar enlace",
-		link_copied: "Enlace copiado al portapapeles"
+		link_copied: "Enlace copiado al portapapeles",
+		enroll_again: "Vincularlo de nuevo",
+		profile_again: "Descargar el perfil de nuevo"
 	}
 };

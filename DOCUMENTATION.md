@@ -2170,6 +2170,8 @@ It **watches the device itself**: `api.getStatus()` on arrival and on a clock,
 a hidden tab, and not at all once every step is done; on the adult path also
 `api.getProfileStatus()` until the profile is in. A step the device proves ticks
 itself; the rest are ticked by hand and remembered per device in localStorage.
+A finished link or profile step draws no QR, but offers "Link it again" or
+"Download the profile again", which asks `api.getLink()` for a fresh one.
 
 ```svelte
 <script>

@@ -125,6 +125,8 @@ export const translations = {
 		step_filter_on_note_tech: "**Update Rules**, הכפתור הכחול באפליקציה, לא מפעיל את הסינון. רק **הפעל הגנה** מפעיל אותו.",
 		close: "סגירה",
 		copy_link: "העתקת הקישור",
-		link_copied: "הקישור הועתק ללוח"
+		link_copied: "הקישור הועתק ללוח",
+		enroll_again: "קשר אותו שוב",
+		profile_again: "הורד את הפרופיל שוב"
 	}
 };

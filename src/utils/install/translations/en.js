@@ -125,6 +125,8 @@ export const translations = {
 		step_filter_on_note_tech: "**Update Rules**, the blue button in the app, does not turn the filter on. Only **Enable protection** does.",
 		close: "Close",
 		copy_link: "Copy link",
-		link_copied: "Link copied to clipboard"
+		link_copied: "Link copied to clipboard",
+		enroll_again: "Link it again",
+		profile_again: "Download the profile again"
 	}
 };

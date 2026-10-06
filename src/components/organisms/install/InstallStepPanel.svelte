@@ -14,6 +14,11 @@
 	 * Every line is drawn through `RichText`, so the labels the reader has to find
 	 * on a phone screen are bold.
 	 *
+	 * **A finished link or profile step can be done again.** Its QR is not drawn
+	 * (a finished step never spends a credential by itself), but a "Link it again" or
+	 * "Download the profile again" button brings it back (MHomsany, 2026-10-06:
+	 * an already-linked device has to be relinkable).
+	 *
 	 * @prop {import('../../../utils/install/steps.js').InstallStep} step
 	 * @prop {boolean} done
 	 * @prop {boolean} confirmedByDevice The device itself proved it.
@@ -27,10 +32,11 @@
 	 * @prop {boolean} [showCopy]
 	 * @prop {2 | 3 | 4} [headingLevel]
 	 */
-	import { CircleCheck, CircleHelp, Loader } from '@lucide/svelte';
+	import { CircleCheck, CircleHelp, Loader, QrCode } from '@lucide/svelte';
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { MODE_LABELS, PIN_LINE } from '../../../utils/install/steps.js';
 	import Callout from '../../atoms/Callout.svelte';
+	import ControlButton from '../../atoms/ControlButton.svelte';
 	import RichText from '../../atoms/RichText.svelte';
 	import AccountKindHelp from './AccountKindHelp.svelte';
 	import InstallLinkAction from './InstallLinkAction.svelte';
@@ -65,7 +71,14 @@
 
 	const questionId = $props.id();
 
+	const AGAIN_KEYS = {
+		enroll: 'DeviceInstall.enroll_again',
+		profile: 'DeviceInstall.profile_again'
+	};
+
 	let helpOpen = $state(false);
+	/** The reader asked for a finished step's QR again, to relink or reinstall. */
+	let again = $state(false);
 	/** The reader asked to change an answer they already gave. */
 	let changing = $state(false);
 
@@ -222,7 +235,7 @@
 		</Callout>
 	{/if}
 
-	{#if actionKind && !done}
+	{#if actionKind && (!done || again)}
 		{#key actionKind}
 			<InstallLinkAction
 				{deviceId}
@@ -232,6 +245,13 @@
 				onPending={onActionPending}
 			/>
 		{/key}
+	{:else if actionKind}
+		<!-- A finished step can still be redone: a phone reset or reinstalled since,
+		     or a profile removed. The QR is only fetched when asked for. -->
+		<ControlButton color="azure" onclick={() => (again = true)}>
+			<QrCode size={16} aria-hidden="true" />
+			{$t(AGAIN_KEYS[actionKind])}
+		</ControlButton>
 	{/if}
 
 	{#if step.troubleshootKey && !done}
