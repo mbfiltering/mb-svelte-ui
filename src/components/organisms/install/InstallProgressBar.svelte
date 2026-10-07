@@ -59,7 +59,7 @@
 	const headingSize = $derived(headingLevel === 1 ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl');
 </script>
 
-<div class="space-y-3">
+<div class="space-y-4">
 	<svelte:element
 		this={headingTag}
 		class="text-center font-bold text-balance text-azure-600 dark:text-azure-400 {headingSize} {TINT}"
