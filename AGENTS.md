@@ -184,6 +184,24 @@ after mount. Item hits still go through `externalQuery`. Do not mount the full
 unpaginated list for CSS to scan; pagination is the guard that keeps keystrokes
 fast.
 
+**The search has to see content that arrives late.** Islands mount when their data
+lands, often after the query was typed, and the CSS hides every island not marked as a
+match. So the scan re-runs from a `MutationObserver` on the content area while a query
+is active, watching child lists and `data-magicsearch` only: never `class`, which the
+scan itself writes. Until October 2026 it ran on keystrokes alone, and a search started
+during loading hid matching islands and showed "nothing found" beside them. Skeletons
+carry `data-skeleton` and are hidden during a search; the host's `searchPending` prop
+replaces the no-results message with a "still loading" line.
+
+Keystrokes typed before the input exists go through `SectionedPage`'s window listener,
+so it **claims** each one it decides is search typing (`preventDefault` +
+`stopPropagation`, from a capture-phase listener so it wins whatever the registration
+order). Without that, a host's own double-tap shortcuts saw them too: the technician
+portal counts any two s's inside 300 ms as SS, and "apps list" typed during loading
+opened Site Lookup. The first, buffered key is never claimed, so a real double-tap
+still reaches the host. While `loading`, a space also counts as typing once a query has
+started; otherwise it stays page scroll.
+
 Magic search is also why `fuzzyMatch` is a single pass rather than the window loop
 it used to be: it runs for every searchable element and every row on every
 keystroke. Any change to it must return exactly what it returns today; the

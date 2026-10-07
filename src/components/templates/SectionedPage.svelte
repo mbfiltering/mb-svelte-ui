@@ -54,10 +54,15 @@
 		error = '',
 		onRetry = () => {},
 
+		// True while islands are still fetching after the page shell has loaded.
+		// A search then says results may be missing instead of "nothing found".
+		searchPending = false,
+
 		// i18n text props
 		magicSearchPlaceholder = 'Magic search...',
 		magicSearchNoResultsPrefix = 'Nothing found for',
 		magicSearchNoResultsSuffix = 'Check your spelling, or try searching for related words.',
+		magicSearchPendingText = 'Still loading. Some results may not show yet.',
 		collapseAllSectionsTitle = 'Collapse all sections',
 		expandAllSectionsTitle = 'Expand all sections',
 		disabledDuringSearchTitle = 'Disabled during search',
@@ -102,6 +107,7 @@
 	let magicSearchInput = $state(null);
 	let magicSearchFocused = $state(false);
 	let magicSearchNoMatches = $state(false);
+	let contentArea = $state(null);
 	let overflowMenuOpen = $state(false);
 
 	// Derived state
@@ -185,14 +191,9 @@
 		// If no hash, leave activeSection as-is (don't interfere with normal navigation)
 	}
 
-	// Magic search: DOM-based effect that scans all data-magicsearch elements
-	$effect(() => {
-		if (typeof document === 'undefined') return; // SSR guard
-
-		const query = magicSearchQuery.trim().toLowerCase();
-
-		// Find all elements with data-magicsearch attribute
-		const searchableElements = document.querySelectorAll('[data-magicsearch]');
+	// Magic search: mark every data-magicsearch element under `root` as a match or not
+	function applyMagicSearch(root, query) {
+		const searchableElements = root.querySelectorAll('[data-magicsearch]');
 
 		// Track if any islands match
 		let hasAnyIslandMatch = false;
@@ -219,13 +220,38 @@
 
 		// Check if any island is visible
 		if (query) {
-			const visibleIslands = document.querySelectorAll(
+			const visibleIslands = root.querySelectorAll(
 				'.magicsearch-island.magicsearch-match, .magicsearch-island:has(.magicsearch-match)'
 			);
 			magicSearchNoMatches = visibleIslands.length === 0;
 		} else {
 			magicSearchNoMatches = false;
 		}
+	}
+
+	// Run the search on every keystroke, and again whenever the content changes while
+	// a query is active. Islands that finish loading after the query was typed mount
+	// unmarked, and the CSS hides every unmarked island, so without the observer a
+	// matching island stays hidden until the next keystroke. Mutation records arrive
+	// batched once per microtask, before paint, so a newly mounted island never shows
+	// a frame in the wrong state. Our own class changes are not observed (only
+	// `data-magicsearch` is), so the callback cannot trigger itself.
+	$effect(() => {
+		const root = contentArea;
+		if (!root) return;
+
+		const query = magicSearchQuery.trim().toLowerCase();
+		applyMagicSearch(root, query);
+		if (!query) return;
+
+		const observer = new MutationObserver(() => applyMagicSearch(root, query));
+		observer.observe(root, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['data-magicsearch']
+		});
+		return () => observer.disconnect();
 	});
 
 	// Clear magic search
@@ -244,15 +270,30 @@
 	}
 
 	// Is this a bare printable character keystroke (typing), not a command/shortcut?
-	// Space is excluded so it keeps its native page-scroll behavior.
+	// Space is excluded so it keeps its native page-scroll behavior, except while the
+	// page is loading and a query has started: the input is not on screen yet to take
+	// it, so without this "apps list" typed early would arrive as "appslist".
 	function isTypingKey(event) {
+		const continuesQuery = loading && (magicSearchQuery !== '' || bufferedKey !== null);
 		return (
 			event.key.length === 1 &&
-			event.key !== ' ' &&
+			(event.key !== ' ' || continuesQuery) &&
 			!event.ctrlKey &&
 			!event.metaKey &&
 			!event.altKey
 		);
+	}
+
+	// A keystroke that is search typing belongs to the search alone. Without this a
+	// host page's own double-tap shortcuts see it too: typed while the page is still
+	// loading (no input on screen to take focus), "apps list" carries two s's inside
+	// the double-tap window and opened the technician portal's Site Lookup. The
+	// listener runs in the capture phase so this holds whichever listener was added
+	// first. A buffered first key is not claimed, so a real double-tap still reaches
+	// the host.
+	function claimKey(event) {
+		event.preventDefault();
+		event.stopPropagation();
 	}
 
 	// Keyboard shortcut handler
@@ -289,7 +330,7 @@
 			// With hotkeys off there are no double-tap combos to disambiguate from —
 			// every bare key is typing, so route it straight into magic search.
 			if (!hotkeysEnabled) {
-				event.preventDefault();
+				claimKey(event);
 				typeIntoMagicSearch(char);
 				return;
 			}
@@ -315,7 +356,7 @@
 				}
 
 				// Different key = the user is typing.
-				event.preventDefault();
+				claimKey(event);
 				typeIntoMagicSearch(prev + char);
 				return;
 			}
@@ -337,7 +378,7 @@
 
 			// Magic search is already active but the input isn't focused →
 			// continue typing into it.
-			event.preventDefault();
+			claimKey(event);
 			typeIntoMagicSearch(char);
 			return;
 		}
@@ -345,12 +386,12 @@
 
 	onMount(() => {
 		// Add keyboard event listener
-		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('keydown', handleKeyDown, true);
 		// Add hashchange listener for browser back/forward
 		window.addEventListener('hashchange', handleHashChange);
 
 		return () => {
-			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('keydown', handleKeyDown, true);
 			window.removeEventListener('hashchange', handleHashChange);
 			if (keyBufferTimer !== null) clearTimeout(keyBufferTimer);
 		};
@@ -505,10 +546,12 @@
 		</div>
 
 		<!-- Main content area -->
+		<!-- Not searching while the page skeleton is up: the search CSS would hide it. -->
 		<div
-			class="w-full space-y-3 p-4 sm:space-y-6 sm:p-8 {magicSearchActive
+			bind:this={contentArea}
+			class="w-full space-y-3 p-4 sm:space-y-6 sm:p-8 {magicSearchActive && !loading
 				? 'magicsearch-active'
-				: ''} {magicSearchNoMatches ? 'magicsearch-nomatches' : ''}"
+				: ''} {magicSearchNoMatches && !searchPending ? 'magicsearch-nomatches' : ''}"
 		>
 			{#if loading}
 				{#if mainSkeleton}
@@ -595,6 +638,13 @@
 					</button>
 					{/if}
 				</div>
+
+				<!-- Magic search: some islands are still loading, so they cannot match yet -->
+				{#if magicSearchActive && searchPending}
+					<p class="px-4 text-sm text-gray-900/50 dark:text-gray-50/50" role="status">
+						{magicSearchPendingText}
+					</p>
+				{/if}
 
 				<!-- Magic search: No results message -->
 				{#if magicSearchEnabled}

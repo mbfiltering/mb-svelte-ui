@@ -57,7 +57,7 @@
 
 {#if rows.length > 0}
 	<!-- Skeleton with sub-rows -->
-	<div class="{rounded} bg-gray-900/10 p-4 dark:bg-gray-50/10 {className}">
+	<div data-skeleton class="{rounded} bg-gray-900/10 p-4 dark:bg-gray-50/10 {className}">
 		<div class="flex flex-col gap-3">
 			{#each processedRows as row}
 				{#if row.type === 'full'}
@@ -77,6 +77,7 @@
 {:else}
 	<!-- Simple skeleton -->
 	<div
+		data-skeleton
 		class="{height} {width} {rounded} animate-pulse bg-gray-900/10 dark:bg-gray-50/10 {className}"
 	></div>
 {/if}

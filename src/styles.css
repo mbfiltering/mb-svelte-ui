@@ -546,6 +546,11 @@ html.hide-info-helpers .info-helper {
 	display: flex !important;
 }
 
+/* Loading placeholders cannot match anything; the host's searchPending line says why */
+.magicsearch-active [data-skeleton] {
+	display: none !important;
+}
+
 /* Magic search: "nothing found" message is hidden by default, shown when no matches */
 .magicsearch-noresults {
 	display: none;

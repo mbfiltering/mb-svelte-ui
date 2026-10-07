@@ -2889,6 +2889,8 @@ Full page layout template: sticky header, loading progress bar, main content are
 | `loading`         | `boolean`  | `false`    | Show loading state           |
 | `error`           | `string`   | `''`       | Error message                |
 | `onRetry`         | `function` | `() => {}` | Retry button handler         |
+| `searchPending`   | `boolean`  | `false`    | True while islands are still fetching after `loading` has cleared. During a search it shows `magicSearchPendingText` instead of the no-results message, which would be premature. |
+| `magicSearchPendingText` | `string` | `'Still loading. Some results may not show yet.'` | The line shown under the search bar while searching with `searchPending` set |
 | `overflowMenuTitle` | `string` | `'More'` | Title for the mobile overflow menu |
 | `defaultIslandsExpanded` | `boolean` | `true` | Initial expanded state for all Islands rendered via `ctx.islandProps`. Captured on mount; users can still toggle expand/collapse all afterwards. |
 | `hotkeysEnabled`  | `boolean`  | `true`     | Master switch for the keyboard shortcuts (`Alt+Shift+{letter}` section nav, double-tap `CC`) and their `Kbd` hint badges. Set `false` to disable all shortcuts and hide the hints — magic search still works by clicking/typing into the input, and per-section `shortcut` badges are suppressed. |
@@ -3005,6 +3007,8 @@ Pass `hotkeysEnabled={false}` to disable all of the above and hide their `Kbd` h
 
 **Magic Search:**
 The template includes a "magic search" that searches across all elements with `data-magicsearch` attributes. An island whose own terms match the query gets `magicsearch-island-match` and CSS shows every `.magicsearch-item` inside it. Lists that also take `externalQuery` must pass `containerTerms` (see SearchableList) so they do not JS-filter those rows away.
+
+The search only looks inside the main content area. It runs on every keystroke and, while a query is active, again whenever content is added there (a `MutationObserver`), so an island that finishes loading after the technician started typing is still matched. Keystrokes typed while `loading` is true are kept and applied once the content renders (spaces included, once a query has started). A keystroke taken as search typing is stopped from reaching other `keydown` listeners, so a host's own double-tap shortcuts do not fire mid-word; the first key of a possible double-tap is still passed on. Every `Skeleton` carries `data-skeleton` and is hidden during a search; pass `searchPending` so the page says results may be missing instead.
 
 ```svelte
 <!-- Elements will be filtered by magic search -->
