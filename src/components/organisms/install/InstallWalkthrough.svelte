@@ -99,33 +99,44 @@
 	let status = $state(initialStatus);
 	/** `null` until asked. */
 	let profile = $state(/** @type {any} */ (null));
+	/** When the evidence was last read: a stamp proves a step only while recent. */
+	let readAt = $state(Date.now());
 
 	let attested = $state(/** @type {string[]} */ ([]));
+	/**
+	 * Steps the device has proved since the walkthrough opened. A proof is a
+	 * recent stamp, and stays a proof after the stamp ages out of the window.
+	 */
+	let proven = $state(/** @type {string[]} */ ([]));
 	let accountKind = $state(/** @type {'child' | 'adult' | null} */ (null));
 	// Another device starts from nothing.
 	let answersFor = $state('');
 	$effect(() => {
 		if (answersFor !== deviceId) {
 			attested = [];
+			proven = [];
 			accountKind = null;
 			answersFor = deviceId;
 		}
 	});
 
 	const steps = $derived(installStepsFor(deviceType, accountKind, audience));
-	const evidence = $derived({ status, profile });
+	const evidence = $derived({ status, profile, now: readAt });
+
+	$effect(() => {
+		const fresh = steps.filter((step) => step.isDone?.(evidence) && !proven.includes(step.id));
+		if (fresh.length) proven = [...proven, ...fresh.map((step) => step.id)];
+	});
+
+	/** @param {import('../../../utils/install/steps.js').InstallStep} step */
+	const isProven = (step) => proven.includes(step.id) || (step.isDone?.(evidence) ?? false);
 
 	/** @param {import('../../../utils/install/steps.js').InstallStep} step */
 	const isStepDone = (step) =>
-		step.confirm === 'auto'
-			? (step.isDone?.(evidence) ?? false)
-			: (step.isDone?.(evidence) ?? false) || attested.includes(step.id);
+		step.confirm === 'auto' ? isProven(step) : isProven(step) || attested.includes(step.id);
 
 	const stepStates = $derived(
-		steps.map((step) => {
-			const confirmedByDevice = step.isDone?.(evidence) ?? false;
-			return { confirmedByDevice, done: isStepDone(step) };
-		})
+		steps.map((step) => ({ confirmedByDevice: isProven(step), done: isStepDone(step) }))
 	);
 	const firstUnfinished = $derived(stepStates.findIndex((state) => !state.done));
 	const allDone = $derived(steps.length > 0 && firstUnfinished === -1);
@@ -151,9 +162,7 @@
 		!!currentStep && !currentState?.done && currentStep.confirm === 'auto'
 	);
 
-	const wantsProfile = $derived(
-		accountKind === 'adult' && !(profile?.installed === true && profile?.installed_at)
-	);
+	const wantsProfile = $derived(accountKind === 'adult' && !proven.includes('profile'));
 
 	let refreshing = false;
 	async function refresh() {
@@ -163,6 +172,7 @@
 			const next = await api.getStatus().catch(() => null);
 			if (next) status = next;
 			if (wantsProfile) profile = (await api.getProfileStatus().catch(() => null)) ?? profile;
+			readAt = Date.now();
 		} finally {
 			refreshing = false;
 		}

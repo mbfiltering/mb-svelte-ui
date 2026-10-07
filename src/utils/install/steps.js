@@ -34,6 +34,12 @@
  *     the app, so it ticks both.
  *   - `profile`: `GET /device/{id}/apple/profile-install-status`, `installed`.
  *   - `filter_on`: `status.protection`, which is exactly the filter switch.
+ *
+ * **Only a recent stamp counts** (`RECENT_MS`, 20 minutes, the owner and MHomsany,
+ * 2026-10-07). Core keeps `last_sync` and `installed_at` from an earlier install
+ * on purpose, so a device set up again would otherwise read as linked and profiled
+ * before anything happened. The walkthrough keeps a step done once it has seen it
+ * proved, so the window closing later does not undo it.
  */
 
 /**
@@ -66,6 +72,7 @@
  *   `null` until asked.
  * @property {Record<string, any> | null} [status] `GET /device/{id}/status`
  * @property {{ installed?: boolean, installed_at?: string, is_latest?: boolean } | null} [profile]
+ * @property {number} [now] When the evidence was read, in ms; `Date.now()` if absent.
  *
  * @typedef {object} InstallStep
  * @property {string} id
@@ -101,16 +108,41 @@ const PLAUSIBLE_FLOOR_MS = Date.UTC(2000, 0, 1);
  * @returns {boolean}
  */
 export function hasStamp(value) {
-	if (value === null || value === undefined || value === '') return false;
+	return stampMs(value) !== null;
+}
+
+/**
+ * @param {string | number | undefined | null} value
+ * @returns {number | null} The moment in ms, or `null` for a placeholder.
+ */
+function stampMs(value) {
+	if (value === null || value === undefined || value === '') return null;
+	let ms;
 	if (typeof value === 'number') {
-		const ms = value < 1e11 ? value * 1000 : value;
-		return Number.isFinite(ms) && ms >= PLAUSIBLE_FLOOR_MS;
+		ms = value < 1e11 ? value * 1000 : value;
+	} else {
+		const text = String(value).trim().replace(' ', 'T');
+		if (!text) return null;
+		const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(text);
+		ms = Date.parse(hasZone || !text.includes('T') ? text : `${text}Z`);
 	}
-	const text = String(value).trim().replace(' ', 'T');
-	if (!text) return false;
-	const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(text);
-	const ms = Date.parse(hasZone || !text.includes('T') ? text : `${text}Z`);
-	return !Number.isNaN(ms) && ms >= PLAUSIBLE_FLOOR_MS;
+	return Number.isFinite(ms) && ms >= PLAUSIBLE_FLOOR_MS ? ms : null;
+}
+
+/** How old a stamp may be and still prove a step: this setup, not an earlier one. */
+export const RECENT_MS = 20 * 60_000;
+
+/**
+ * Is an API timestamp real and less than `RECENT_MS` old? A stamp ahead of
+ * `now` counts: that is the phone's or the server's clock, not an old install.
+ *
+ * @param {string | number | undefined | null} value
+ * @param {number} [now]
+ * @returns {boolean}
+ */
+export function isRecentStamp(value, now = Date.now()) {
+	const ms = stampMs(value);
+	return ms !== null && now - ms <= RECENT_MS;
 }
 
 /** The PIN line on the last step, and what it says on a device with no PIN. */
@@ -219,7 +251,7 @@ const INSTALL_APP_STEP = {
 	// Nothing reports the app before it links, so it is the person's word, and
 	// the link proves it after the fact.
 	confirm: 'attest',
-	isDone: ({ status }) => hasStamp(status?.last_sync)
+	isDone: ({ status, now }) => isRecentStamp(status?.last_sync, now)
 };
 
 /**
@@ -228,7 +260,8 @@ const INSTALL_APP_STEP = {
  * The QR carries an `mbsmart://redeem` code; the app redeems it, even before its
  * own onboarding (app team, 2026-10-05), and sends its first heartbeat, which
  * stamps `last_sync`. That stamp is not written at creation, so on a new device
- * it cannot mean anything but "linked". The step watches for it and says so.
+ * it cannot mean anything but "linked". The step watches for a recent one and says
+ * so.
  *
  * @type {InstallStep}
  */
@@ -247,7 +280,7 @@ const LINK_STEP = {
 	confirm: 'auto',
 	waitKey: 'DeviceInstall.step_link_wait',
 	confirmedKey: 'DeviceInstall.step_link_done',
-	isDone: ({ status }) => hasStamp(status?.last_sync)
+	isDone: ({ status, now }) => isRecentStamp(status?.last_sync, now)
 };
 
 /**
@@ -324,7 +357,8 @@ const PROFILE_STEP = {
 	action: 'profile',
 	checkpointKey: 'DeviceInstall.step_profile_checkpoint',
 	confirm: 'auto',
-	isDone: ({ profile }) => profile?.installed === true && !!profile.installed_at
+	isDone: ({ profile, now }) =>
+		profile?.installed === true && isRecentStamp(profile.installed_at, now)
 };
 
 /**

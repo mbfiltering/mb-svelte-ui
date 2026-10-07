@@ -549,6 +549,10 @@ in `mb-specs/tasks/ios-v2/`; read `ios-v2-status.md` there before changing a ste
   the app is installed; its first heartbeat stamps `status.last_sync`, which is what
   the link step and everything after it watch. Moving the link step later throws away
   the reason for the order.
+- **A stamp proves a step only if it is under 20 minutes old** (`RECENT_MS`; the
+  owner and MHomsany, 2026-10-07). Core keeps `last_sync` and `installed_at` from an
+  earlier install on purpose, so a reinstall would otherwise read as done at once.
+  Once proved, a step stays done while the walkthrough is open (`proven`).
 - **Its copy is this package's own locale-first catalog**,
   `utils/install/translations/{lang}.js`, loaded by `loadInstallTranslations` *after*
   the app's chunk for that language (registering first would make `loadLanguage`

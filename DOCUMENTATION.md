@@ -3281,6 +3281,8 @@ without the component.
   the setup; an adult device installs its profile last.
 - `installProgressPhraseKey(completed, total)`: the bar's phrase.
 - `hasStamp(value)`: does an API timestamp name a real moment (not the 1970 epoch).
+- `isRecentStamp(value, now?)`: is it also less than `RECENT_MS` (20 minutes) old?
+  What the link and profile steps go by, so an earlier install does not count.
 - Links: `buildEnrollLink` (`mbsmart://` only), `buildConfigLink` (`https://`
   only), `isAppleMobileBrowser`, `APP_STORE_URL`, `DEVICE_PORTAL_URL`.
 - `loadInstallTranslations(lang)`: registers the `DeviceInstall` copy for a
