@@ -2172,6 +2172,8 @@ a hidden tab, and not at all once every step is done; on the adult path also
 itself; the rest are ticked by hand and remembered per device in localStorage.
 A finished link or profile step draws no QR, but offers "Link it again" or
 "Download the profile again", which asks `api.getLink()` for a fresh one.
+On the adult path the profile is followed by a step to trust the MB Smart
+certificate it brings, ticked by hand: nothing reports that switch.
 
 ```svelte
 <script>

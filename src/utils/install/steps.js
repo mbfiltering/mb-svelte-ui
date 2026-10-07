@@ -281,11 +281,6 @@ const LINK_STEP = {
  * extension's own stamp would tick this with All Websites left on Ask, which is
  * the case the step exists to catch, so it stays the person's word.
  *
- * It also has the person trust certificates (MHomsany, 2026-10-06: they can do it
- * any time, but it belongs in the flow): a root certificate that arrives by hand
- * is not trusted for SSL until it is turned on under Certificate Trust Settings
- * (support.apple.com/102390). It is in Settings too, so it rides along here.
- *
  * @type {InstallStep}
  */
 const EXTENSION_STEP = {
@@ -295,9 +290,7 @@ const EXTENSION_STEP = {
 	instructionKeys: [
 		'DeviceInstall.step_extension_1',
 		'DeviceInstall.step_extension_2',
-		'DeviceInstall.step_extension_3',
-		'DeviceInstall.step_extension_4',
-		'DeviceInstall.step_extension_5'
+		'DeviceInstall.step_extension_3'
 	],
 	confirm: 'attest'
 };
@@ -367,6 +360,24 @@ const PROFILE_STEP = {
 	isDone: ({ profile }) => profile?.installed === true && !!profile.installed_at,
 	// The route is on `api-test` only; elsewhere it 404s and the answer is `null`.
 	isReported: ({ profile }) => profile !== null && profile !== undefined
+};
+
+/**
+ * Adult only, right after the profile, which is what brings the MB Smart root
+ * certificate (MHomsany, 2026-10-07: it comes with the profile, not the app). A
+ * root certificate that arrives in a profile is not trusted for SSL until it is
+ * turned on under Certificate Trust Settings (support.apple.com/102390). Nothing
+ * reports that switch, so it stays the person's word; a step of its own, because
+ * the profile step ticks itself as soon as the profile lands.
+ *
+ * @type {InstallStep}
+ */
+const TRUST_STEP = {
+	id: 'trust',
+	titleKey: 'DeviceInstall.step_trust_title',
+	bodyKey: 'DeviceInstall.step_trust_body',
+	instructionKeys: ['DeviceInstall.step_trust_1', 'DeviceInstall.step_trust_2'],
+	confirm: 'attest'
 };
 
 /**
@@ -472,7 +483,7 @@ export function installStepsFor(deviceType, accountKind, audience = 'customer') 
 	const middle = [INSTALL_APP_STEP, LINK_STEP, EXTENSION_STEP, APP_SETUP_STEP];
 	const steps =
 		accountKind === 'adult'
-			? [...head, SUPERVISE_STEP, ...middle, PROFILE_STEP, FILTER_ON_STEP]
+			? [...head, SUPERVISE_STEP, ...middle, PROFILE_STEP, TRUST_STEP, FILTER_ON_STEP]
 			: [...head, ...middle, FILTER_ON_STEP];
 	return audience === 'technician' ? steps.map(technicianStep) : steps;
 }
