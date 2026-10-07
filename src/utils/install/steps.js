@@ -18,7 +18,10 @@
  *   child: setup_kind, prerequisites, install_app, link_device, extension,
  *          app_setup, filter_on
  *   adult: setup_kind, prerequisites, supervise, install_app, link_device,
- *          extension, app_setup, profile, filter_on
+ *          extension, app_setup, profile, trust, filter_on
+ *
+ * The technician's adult list has no prerequisites: all that was left of it was
+ * the iCloud backup, which the supervise step says anyway (the owner, 2026-10-07).
  *
  * **How a step is confirmed.** `isDone` is the device's own proof and is
  * consulted on every step that has one; device proof outranks a person's word.
@@ -86,7 +89,8 @@
  * @property {string} [confirmLabelKey] Instead of "I've done this".
  * @property {InstallConfirm} confirm
  * @property {string} [waitKey] Instead of the generic waiting line.
- * @property {string} [confirmedKey] Said, in green, once the device proves it.
+ * @property {string} [confirmedKey] The control row's words once the device proves
+ *   it, in place of "Confirmed by the device".
  * @property {(evidence: InstallStepEvidence) => boolean} [isDone]
  * @property {(evidence: InstallStepEvidence) => boolean} [isReported]
  */
@@ -168,7 +172,6 @@ const SETUP_KIND_STEP = {
 const PREREQUISITES_STEP = {
 	id: 'prerequisites',
 	titleKey: 'DeviceInstall.step_prereq_title',
-	bodyKey: 'DeviceInstall.step_prereq_body',
 	question: {
 		labelKey: 'DeviceInstall.account_question',
 		asks: false,
@@ -388,7 +391,8 @@ const FILTER_ON_STEP = {
 	instructionKeys: [
 		'DeviceInstall.step_filter_on_1',
 		'DeviceInstall.step_filter_on_pin',
-		'DeviceInstall.step_filter_on_2'
+		'DeviceInstall.step_filter_on_2',
+		'DeviceInstall.step_filter_on_3'
 	],
 	warnKeys: ['DeviceInstall.step_filter_on_2'],
 	link: {
@@ -397,7 +401,6 @@ const FILTER_ON_STEP = {
 		reach: 'anywhere'
 	},
 	noteKey: 'DeviceInstall.step_filter_on_note',
-	checkpointKey: 'DeviceInstall.step_filter_on_checkpoint',
 	confirmLabelKey: 'DeviceInstall.confirm_seen',
 	confirm: 'auto',
 	isDone: ({ status }) => status?.protection === true
@@ -423,14 +426,11 @@ const TECHNICIAN_LINES = /** @type {Record<string, string>} */ ({
 	'DeviceInstall.step_supervise_body': 'DeviceInstall.step_supervise_body_tech',
 	'DeviceInstall.step_supervise_2': 'DeviceInstall.step_supervise_2_tech',
 	'DeviceInstall.step_supervise_3': 'DeviceInstall.step_supervise_3_tech',
-	'DeviceInstall.step_filter_on_1': 'DeviceInstall.step_filter_on_1_tech',
-	'DeviceInstall.step_filter_on_note': 'DeviceInstall.step_filter_on_note_tech'
+	'DeviceInstall.step_filter_on_1': 'DeviceInstall.step_filter_on_1_tech'
 });
 
-/** What the technician does not need: support, the time, the device portal PIN. */
+/** What the technician does not need: the time, the device portal PIN. */
 const TECHNICIAN_DROPS = [
-	'DeviceInstall.step_prereq_adult_1',
-	'DeviceInstall.step_prereq_adult_3',
 	'DeviceInstall.step_prereq_child_3',
 	PIN_LINE.key
 ];
@@ -454,10 +454,10 @@ function technicianStep(step) {
 		}
 		next.question = { ...step.question, options };
 	}
-	// The supervise note only said "contact support"; the filter note keeps its
-	// warning about Update Rules. The filter is turned on from the technician
-	// portal, so the device portal button goes.
-	if (step.id === 'supervise') delete next.noteKey;
+	// The supervise note only said "contact support", and the filter note was
+	// about the device portal. The filter is turned on from the technician
+	// portal, so the device portal button goes too.
+	if (step.id === 'supervise' || step.id === 'filter_on') delete next.noteKey;
 	else if (step.noteKey) next.noteKey = TECHNICIAN_LINES[step.noteKey] ?? step.noteKey;
 	if (step.id === 'filter_on') delete next.link;
 	return next;
@@ -481,5 +481,8 @@ export function installStepsFor(deviceType, accountKind, audience = 'customer') 
 		accountKind === 'adult'
 			? [...head, SUPERVISE_STEP, ...middle, PROFILE_STEP, TRUST_STEP, FILTER_ON_STEP]
 			: [...head, ...middle, FILTER_ON_STEP];
-	return audience === 'technician' ? steps.map(technicianStep) : steps;
+	if (audience !== 'technician') return steps;
+	return steps
+		.filter((step) => !(accountKind === 'adult' && step.id === 'prerequisites'))
+		.map(technicianStep);
 }

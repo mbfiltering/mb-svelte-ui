@@ -2,9 +2,9 @@
 	/**
 	 * The one step on screen: its title, the question where it has one, the
 	 * numbered instructions, a fixed link, a note, the credential QR, the
-	 * troubleshooting line, the checkpoint, and the device's own confirmation or
-	 * the line saying the page is waiting for it. Previous, Next and "I've done this"
-	 * are the walkthrough's control row, not this panel's.
+	 * troubleshooting line, the checkpoint, and the line saying the page is
+	 * waiting for the device. Previous, Next, "I've done this" and the device's
+	 * own confirmation are the walkthrough's control row, not this panel's.
 	 *
 	 * **Only `setup_kind` asks the child or adult question.** Steps that depend on
 	 * the answer just show its lines (the owner, 2026-10-07: no "You said this
@@ -22,7 +22,6 @@
 	 *
 	 * @prop {import('../../../utils/install/steps.js').InstallStep} step
 	 * @prop {boolean} done
-	 * @prop {boolean} confirmedByDevice The device itself proved it.
 	 * @prop {import('../../../utils/install/steps.js').InstallStepEvidence} evidence
 	 * @prop {string} deviceId
 	 * @prop {string} [devicePin]
@@ -33,7 +32,7 @@
 	 * @prop {boolean} [showCopy]
 	 * @prop {2 | 3 | 4} [headingLevel]
 	 */
-	import { CircleCheck, CircleHelp, Loader, QrCode } from '@lucide/svelte';
+	import { CircleHelp, Loader, QrCode } from '@lucide/svelte';
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { MODE_LABELS, PIN_LINE } from '../../../utils/install/steps.js';
 	import Callout from '../../atoms/Callout.svelte';
@@ -46,7 +45,6 @@
 	let {
 		step,
 		done,
-		confirmedByDevice = false,
 		evidence,
 		deviceId,
 		devicePin = '',
@@ -250,25 +248,13 @@
 	{/if}
 
 	{#if showWait}
-		<!-- Polite, so the line is announced when it appears; the confirmation that
-		     replaces it below is announced the same way. -->
+		<!-- Polite, so the line is announced when it appears. -->
 		<p
 			class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
 			aria-live="polite"
 		>
 			<Loader size={16} class="shrink-0 animate-spin" aria-hidden="true" />
 			<span>{$t(step.waitKey ?? 'DeviceInstall.waiting')}</span>
-		</p>
-	{:else if done && confirmedByDevice && step.confirmedKey}
-		<!-- The device spoke, so say so in words, not only with the small mark in
-		     the control row: on the link step this is the moment MB Smart and the
-		     phone start talking, and it is what the walkthrough was waiting for. -->
-		<p
-			class="flex items-center gap-2 text-base font-medium text-green-alt-700 dark:text-green-alt-300"
-			aria-live="polite"
-		>
-			<CircleCheck size={20} class="shrink-0" aria-hidden="true" />
-			<span>{$t(step.confirmedKey)}</span>
 		</p>
 	{/if}
 </div>

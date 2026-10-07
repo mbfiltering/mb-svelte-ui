@@ -52,7 +52,7 @@
 	 *   and the device portal; see `installStepsFor`.
 	 */
 	import { onMount, tick } from 'svelte';
-	import { BadgeCheck, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { BadgeCheck, Check, ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { language } from '../../../utils/i18n/languageStore.js';
 	import { loadInstallTranslations } from '../../../utils/install/i18n.js';
@@ -334,7 +334,6 @@
 							<InstallStepPanel
 								step={currentStep}
 								done={currentState.done}
-								confirmedByDevice={currentState.confirmedByDevice}
 								{evidence}
 								{deviceId}
 								{devicePin}
@@ -371,8 +370,8 @@
 							<p
 								class="inline-flex items-center gap-1.5 text-center text-sm font-medium text-green-alt-600 dark:text-green-alt-300"
 							>
-								<BadgeCheck size={16} strokeWidth={1.5} class="shrink-0" aria-hidden="true" />
-								<span>{$t('DeviceInstall.detected')}</span>
+								<Check size={16} strokeWidth={2} class="shrink-0" aria-hidden="true" />
+								<span>{$t(currentStep.confirmedKey ?? 'DeviceInstall.detected')}</span>
 							</p>
 						{:else}
 							<button
@@ -382,7 +381,7 @@
 								aria-pressed="true"
 								onclick={() => handleUndo(currentStep.id)}
 							>
-								<BadgeCheck size={16} strokeWidth={1.5} class="shrink-0" aria-hidden="true" />
+								<Check size={16} strokeWidth={2} class="shrink-0" aria-hidden="true" />
 								<span>{$t('DeviceInstall.marked_done')}</span>
 							</button>
 						{/if}

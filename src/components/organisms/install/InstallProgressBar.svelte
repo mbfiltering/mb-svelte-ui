@@ -106,7 +106,7 @@
 								: 'border-2 border-gray-300 bg-white text-gray-600 hover:border-azure-400 hover:text-azure-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-300 dark:hover:border-azure-400 dark:hover:text-azure-300'}
 								{isCurrent ? 'ring-2 ring-azure-500 ring-offset-2 ring-offset-white dark:ring-azure-400 dark:ring-offset-zinc-800' : ''}"
 							style={isDone
-								? `background-color: color-mix(in srgb, var(--color-azure-600), var(--color-green-alt-700) ${at(index)}%)`
+								? `background-color: color-mix(in oklab, var(--color-azure-500), var(--color-green-alt-400) ${at(index)}%)`
 								: undefined}
 							title={title}
 							aria-current={isCurrent ? 'step' : undefined}
