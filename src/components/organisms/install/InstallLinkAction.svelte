@@ -12,16 +12,16 @@
 	 * unfinished, so a finished step never spends a credential, and the link is
 	 * fetched once per arrival (not per re-render: the walkthrough polls). It is
 	 * fetched again when its clock runs out, never behind a hidden tab, and a
-	 * refusal is not retried on a timer.
+	 * refusal or a failure is not retried on a timer.
 	 *
 	 * `kind` is read once: the panel keys this component on it, so a change of kind
 	 * is a remount with the right clock and validator, not a prop update.
 	 *
 	 * @prop {string} deviceId
 	 * @prop {'enroll' | 'profile'} kind
-	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null, expiresAt?: number }>} getLink
-	 *   Resolves with the raw link; rejects with an error carrying `status` (404:
-	 *   the route is not there; 403: refused) or anything else for a failure.
+	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
+	 *   Resolves with the raw link; rejects with an error carrying `status` (403:
+	 *   refused) or anything else for a failure.
 	 * @prop {boolean} [showCopy] A "Copy link" button under the QR, for a
 	 *   technician who is sending the link to someone rather than holding the phone.
 	 * @prop {(pending: boolean) => void} [onPending] True while there is nothing on
@@ -53,7 +53,6 @@
 			creating: 'DeviceInstall.enroll_creating',
 			openHere: 'DeviceInstall.enroll_open_here',
 			error: 'DeviceInstall.enroll_error',
-			unavailable: 'DeviceInstall.enroll_unavailable',
 			locked: 'DeviceInstall.enroll_locked'
 		},
 		profile: {
@@ -64,7 +63,6 @@
 			creating: 'DeviceInstall.profile_creating',
 			openHere: 'DeviceInstall.profile_open_here',
 			error: 'DeviceInstall.profile_error',
-			unavailable: 'DeviceInstall.profile_unavailable',
 			locked: 'DeviceInstall.profile_locked'
 		}
 	};
@@ -78,7 +76,6 @@
 	let link = $state(/** @type {string | null} */ (null));
 	let errorMessage = $state('');
 	let locked = $state(false);
-	let unavailable = $state(false);
 	let fetching = $state(false);
 	let copied = $state(false);
 
@@ -95,7 +92,6 @@
 	async function fetchLink() {
 		errorMessage = '';
 		locked = false;
-		unavailable = false;
 		link = null;
 		fetching = true;
 		onPending?.(true);
@@ -107,12 +103,10 @@
 				return;
 			}
 			link = built;
-			// A link kept from earlier arrives part-spent; renew when it actually dies.
-			renewal.arm(response?.expiresAt ? response.expiresAt - Date.now() : undefined);
+			renewal.arm();
 		} catch (error) {
 			const status = /** @type {any} */ (error)?.status;
-			if (status === 404) unavailable = true;
-			else if (status === 403) locked = true;
+			if (status === 403) locked = true;
 			else errorMessage = $t(variant.error);
 		} finally {
 			fetching = false;
@@ -166,8 +160,6 @@
 				{/if}
 			</div>
 		{/if}
-	{:else if unavailable}
-		<Callout color="gray"><p>{$t(variant.unavailable)}</p></Callout>
 	{:else if locked}
 		<!-- Orange, not red: nothing is broken, this way in is closed. -->
 		<Callout color="orange"><p>{$t(variant.locked)}</p></Callout>

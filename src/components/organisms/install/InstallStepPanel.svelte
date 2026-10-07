@@ -22,13 +22,12 @@
 	 *
 	 * @prop {import('../../../utils/install/steps.js').InstallStep} step
 	 * @prop {boolean} done
-	 * @prop {import('../../../utils/install/steps.js').InstallStepEvidence} evidence
 	 * @prop {string} deviceId
 	 * @prop {string} [devicePin]
 	 * @prop {'child' | 'adult' | null} accountKind
 	 * @prop {(kind: 'child' | 'adult') => void} onChooseAccount
 	 * @prop {(pending: boolean) => void} onActionPending
-	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null, expiresAt?: number }>} getLink
+	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 * @prop {boolean} [showCopy]
 	 * @prop {2 | 3 | 4} [headingLevel]
 	 */
@@ -45,7 +44,6 @@
 	let {
 		step,
 		done,
-		evidence,
 		deviceId,
 		devicePin = '',
 		accountKind,
@@ -92,10 +90,8 @@
 
 	const showCheckpoint = $derived(!!checkpointKey && !done && (!step.question || !!accountKind));
 
-	/** Wait only where the device can prove the step and core is sending the field. */
-	const showWait = $derived(
-		!done && step.confirm === 'auto' && (step.isReported?.(evidence) ?? true)
-	);
+	/** A step the device proves waits for it; there is no button to press instead. */
+	const showWait = $derived(!done && step.confirm === 'auto');
 
 	const titleTag = $derived(`h${headingLevel}`);
 

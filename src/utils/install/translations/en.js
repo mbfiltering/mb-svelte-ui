@@ -34,8 +34,6 @@ export const translations = {
 		enroll_open_here: "Open MB Smart on this device",
 		enroll_error: "The enrollment code could not be created. Please try again.",
 		enroll_locked: "This device is already enrolled, so there is nothing left to do here. Mark this step as done and carry on.",
-		enroll_unavailable: "Enrolling from the portal is not available yet. Open MB Smart Protect on the device and enroll it from there.",
-		profile_unavailable: "Getting the profile from the portal is not available yet. Download it from inside the MB Smart Protect app on the device.",
 		profile_creating: "Getting the filter profile…",
 		profile_qr_label: "QR code for downloading this device’s filter profile",
 		profile_open_here: "Download the profile on this device",

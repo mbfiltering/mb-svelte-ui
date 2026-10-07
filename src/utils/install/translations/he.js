@@ -34,8 +34,6 @@ export const translations = {
 		enroll_open_here: "פתח את MB Smart במכשיר הזה",
 		enroll_error: "לא ניתן היה ליצור את קוד הרישום. נסה שוב.",
 		enroll_locked: "המכשיר הזה כבר רשום, ולכן אין כאן מה לעשות. סמן את השלב הזה כבוצע והמשך.",
-		enroll_unavailable: "רישום מהפורטל עדיין לא זמין. פתח את MB Smart Protect במכשיר ורשום אותו משם.",
-		profile_unavailable: "קבלת הפרופיל מהפורטל עדיין לא זמינה. הורד אותו מתוך אפליקציית MB Smart Protect במכשיר.",
 		profile_creating: "מקבל את פרופיל הסינון…",
 		profile_qr_label: "קוד QR להורדת פרופיל הסינון של המכשיר הזה",
 		profile_open_here: "הורד את הפרופיל במכשיר הזה",

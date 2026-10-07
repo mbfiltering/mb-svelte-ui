@@ -2170,8 +2170,10 @@ locale files and loads itself (see [install](#install)).
 It **watches the device itself**: `api.getStatus()` on arrival and on a clock,
 5 s while the step on screen waits on the device and 15 s otherwise, never behind
 a hidden tab, and not at all once every step is done; on the adult path also
-`api.getProfileStatus()` until the profile is in. A step the device proves ticks
-itself; the rest are ticked by hand and remembered per device in localStorage.
+`api.getProfileStatus()` until the profile is in. A step the device proves (the
+link, the profile, the filter) waits for it and has no button; the rest are ticked
+by hand. Ticks and the adult or child answer last as long as the component is
+mounted; nothing is written to the browser.
 A finished link or profile step draws no QR, but offers "Link it again" or
 "Download the profile again", which asks `api.getLink()` for a fresh one.
 On the adult path the profile is followed by a step to trust the MB Smart
@@ -2183,7 +2185,7 @@ certificate it brings, ticked by hand: nothing reports that switch.
 
 	const api = {
 		getStatus: () => getStatus(deviceId), // GET /device/{id}/status
-		getProfileStatus: () => getProfileStatus(deviceId), // null on 404
+		getProfileStatus: () => getProfileStatus(deviceId), // GET /device/{id}/apple/profile-install-status
 		getLink: async (kind) => ({ link: await mint(kind) }) // 'enroll' | 'profile'
 	};
 </script>
@@ -2196,7 +2198,7 @@ certificate it brings, ticked by hand: nothing reports that switch.
 | `deviceId`, `deviceType` | `string` | | The device. Only Apple types have steps |
 | `devicePin` | `string` | `''` | Named on the filter step |
 | `initialStatus` | `object | null` | `null` | First paint, before the first poll |
-| `api` | `{ getStatus, getProfileStatus, getLink }` | | How this portal reaches core. `getLink` resolves `{ link, expiresAt? }` and rejects with an error carrying `status` (404: not there, 403: refused) |
+| `api` | `{ getStatus, getProfileStatus, getLink }` | | How this portal reaches core. `getLink` resolves `{ link }` and rejects with an error carrying `status` (403: refused) |
 | `doneLabel` | `string` | | The summary's button, translated |
 | `onDone` | `() => void` | | |
 | `headingLevel` | `1 | 2` | `1` | Of the progress phrase; step titles sit one below |
@@ -3269,14 +3271,12 @@ prerendered pages. Used by the customer portal's marketing pages and every OAuth
 `@mbsmart/ui/install`: the walkthrough's logic, for a host that needs a piece of it
 without the component.
 
-- `installStepsFor(deviceType, accountKind)` and `hasInstallSteps(deviceType)`.
+- `installStepsFor(deviceType, accountKind, audience)` and `hasInstallSteps(deviceType)`.
   The order is link first and profile last: every device redeems an enrolment code
   straight after the app is installed, so the portal hears from it for the rest of
   the setup; an adult device installs its profile last.
-- Progress in localStorage, per origin and per device: `getAttestedSteps`,
-  `getInstallAccount`, `isInstallFinished`, `wasRegisteredInConfigMode` /
-  `markRegisteredInConfigMode`, and `rememberConfigLink` /
-  `getRememberedConfigLink` for the profile link a create response hands out once.
+- `installProgressPhraseKey(completed, total)`: the bar's phrase.
+- `hasStamp(value)`: does an API timestamp name a real moment (not the 1970 epoch).
 - Links: `buildEnrollLink` (`mbsmart://` only), `buildConfigLink` (`https://`
   only), `isAppleMobileBrowser`, `APP_STORE_URL`, `DEVICE_PORTAL_URL`.
 - `loadInstallTranslations(lang)`: registers the `DeviceInstall` copy for a

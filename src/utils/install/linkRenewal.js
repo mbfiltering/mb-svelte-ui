@@ -13,9 +13,7 @@
 
 /**
  * @typedef {object} LinkRenewal
- * @property {(remainingMs?: number) => void} arm A fresh link landed. Start its
- *   clock over, from the TTL or from what is left of it: a link kept from the
- *   create response arrives part-spent.
+ * @property {() => void} arm A fresh link landed. Start its clock over.
  * @property {() => void} cancel Drop whatever is scheduled, and any held renewal.
  * @property {() => void} destroy `cancel`, plus release the visibility listener.
  */
@@ -23,8 +21,7 @@
 /**
  * Calls `renew` once `ttlMs` has passed since the last `arm()`, deferring until
  * the page is visible. `renew` arms again when it succeeds and leaves the timer
- * cancelled when it does not, so a route answering 404 is asked once, not on a
- * timer.
+ * cancelled when it does not, so a refusal is asked once, not on a timer.
  *
  * @param {number} ttlMs
  * @param {() => void} renew
@@ -64,9 +61,9 @@ export function createLinkRenewal(ttlMs, renew) {
 	}
 
 	return {
-		arm(remainingMs) {
+		arm() {
 			cancel();
-			timer = setTimeout(fire, Math.max(0, remainingMs ?? ttlMs));
+			timer = setTimeout(fire, ttlMs);
 		},
 		cancel,
 		destroy() {

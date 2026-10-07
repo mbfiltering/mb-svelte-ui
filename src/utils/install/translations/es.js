@@ -34,8 +34,6 @@ export const translations = {
 		enroll_open_here: "Abrir MB Smart en este dispositivo",
 		enroll_error: "No se pudo crear el código de inscripción. Inténtelo de nuevo.",
 		enroll_locked: "Este dispositivo ya está inscrito, así que no queda nada que hacer aquí. Marque este paso como hecho y continúe.",
-		enroll_unavailable: "La inscripción desde el portal aún no está disponible. Abra MB Smart Protect en el dispositivo e inscríbalo desde allí.",
-		profile_unavailable: "Obtener el perfil desde el portal aún no está disponible. Descárguelo desde la app MB Smart Protect en el dispositivo.",
 		profile_creating: "Obteniendo el perfil del filtro…",
 		profile_qr_label: "Código QR para descargar el perfil del filtro de este dispositivo",
 		profile_open_here: "Descargar el perfil en este dispositivo",

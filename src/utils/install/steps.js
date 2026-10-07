@@ -23,23 +23,17 @@
  * The technician's adult list has no prerequisites: all that was left of it was
  * the iCloud backup, which the supervise step says anyway (the owner, 2026-10-07).
  *
- * **How a step is confirmed.** `isDone` is the device's own proof and is
- * consulted on every step that has one; device proof outranks a person's word.
- * `confirm: 'auto'` only decides whether a "waiting for the device" line is drawn,
- * and `isReported` keeps that line away while core is not sending the field the
- * step waits on, so it can never spin for ever. Absent fields are "no news",
- * never "no". Every step can also be ticked by hand, because a signal that has
- * not arrived yet looks exactly like one that never will.
+ * **How a step is confirmed.** `confirm: 'auto'`: only by the device. The step
+ * shows "waiting for the device" and has no button. `confirm: 'attest'`: by
+ * pressing "I've done this", or by the device where the step has an `isDone`.
  *
- * **What proves what, today** (verified on `api-test.mbsmart.dev`, 2026-10-05):
+ * **What the device proves** (verified on `api-test.mbsmart.dev`):
  *
- *   - `link_device`: `status.last_sync` leaves the 1970 epoch on the app's first
- *     heartbeat after it redeems the code. Stamped once and held.
+ *   - `install_app` and `link_device`: `status.last_sync` leaves the 1970 epoch
+ *     on the app's first heartbeat after it redeems the code. A linked device has
+ *     the app, so it ticks both.
  *   - `profile`: `GET /device/{id}/apple/profile-install-status`, `installed`.
  *   - `filter_on`: `status.protection`, which is exactly the filter switch.
- *   - `install_app` and `app_setup` have predicates for fields core does not send
- *     to these tokens yet (`last_app_sync`, `managed_settings_active`,
- *     `family_controls_status`). They tick by themselves the day it does.
  */
 
 /**
@@ -63,14 +57,13 @@
  * @property {string} [checkpointKey] Instead of the step's.
  *
  * @typedef {object} InstallQuestion "Which kind of Apple Account?" Only
- *   `setup_kind` asks it; the steps that depend on the answer recall it with a
- *   "Change this" beside it.
+ *   `setup_kind` asks it; the steps that depend on the answer just show its lines.
  * @property {string} labelKey
  * @property {boolean} asks
  * @property {Record<InstallAccountKind, InstallAccountOption>} options
  *
  * @typedef {object} InstallStepEvidence What a step may read to prove itself.
- *   `null` while nothing has answered.
+ *   `null` until asked.
  * @property {Record<string, any> | null} [status] `GET /device/{id}/status`
  * @property {{ installed?: boolean, installed_at?: string, is_latest?: boolean } | null} [profile]
  *
@@ -86,13 +79,12 @@
  * @property {InstallStepLink} [link]
  * @property {InstallQuestion} [question]
  * @property {InstallActionKind} [action] The credential the portal hands over.
- * @property {string} [confirmLabelKey] Instead of "I've done this".
+ * @property {string} [confirmLabelKey] Instead of "I've done this"; `attest` only.
  * @property {InstallConfirm} confirm
  * @property {string} [waitKey] Instead of the generic waiting line.
  * @property {string} [confirmedKey] The control row's words once the device proves
  *   it, in place of "Confirmed by the device".
  * @property {(evidence: InstallStepEvidence) => boolean} [isDone]
- * @property {(evidence: InstallStepEvidence) => boolean} [isReported]
  */
 
 import { APP_STORE_URL, DEVICE_PORTAL_URL } from './links.js';
@@ -121,19 +113,7 @@ export function hasStamp(value) {
 	return !Number.isNaN(ms) && ms >= PLAUSIBLE_FLOOR_MS;
 }
 
-/**
- * Apple's Screen Time authorization, reduced to approved or not. The spelling is
- * a guess (the field is on no customer payload yet), so case and separators are
- * folded: matching too narrowly only costs someone a tick they make by hand.
- *
- * @param {string | undefined | null} value
- */
-export function isFamilyControlsApproved(value) {
-	if (!value) return false;
-	return value.toLowerCase().replace(/[^a-z]/g, '') === 'approved';
-}
-
-/** The PIN line on the last step, and what a row with no PIN falls back to. */
+/** The PIN line on the last step, and what it says on a device with no PIN. */
 export const PIN_LINE = {
 	key: 'DeviceInstall.step_filter_on_pin',
 	without: 'DeviceInstall.step_filter_on_pin_unknown'
@@ -236,16 +216,10 @@ const INSTALL_APP_STEP = {
 		qrLabelKey: 'DeviceInstall.app_store_qr_label',
 		qrCaptionKey: 'DeviceInstall.app_store_qr_caption'
 	},
-	confirm: 'auto',
-	// The app's heartbeat, or a device that has already linked (which it cannot
-	// do without the app).
-	isDone: ({ status }) =>
-		hasStamp(status?.last_app_sync) ||
-		status?.managed_settings_active === true ||
-		hasStamp(status?.last_sync),
-	// Wait only once core sends one of the app's own fields at all.
-	isReported: ({ status }) =>
-		status?.last_app_sync !== undefined || status?.managed_settings_active !== undefined
+	// Nothing reports the app before it links, so it is the person's word, and
+	// the link proves it after the fact.
+	confirm: 'attest',
+	isDone: ({ status }) => hasStamp(status?.last_sync)
 };
 
 /**
@@ -270,11 +244,10 @@ const LINK_STEP = {
 	action: 'enroll',
 	checkpointKey: 'DeviceInstall.step_link_checkpoint',
 	troubleshootKey: 'DeviceInstall.link_troubleshoot',
-	confirmLabelKey: 'DeviceInstall.confirm_seen',
 	confirm: 'auto',
 	waitKey: 'DeviceInstall.step_link_wait',
 	confirmedKey: 'DeviceInstall.step_link_done',
-	isDone: ({ status }) => hasStamp(status?.last_sync) || hasStamp(status?.last_app_sync)
+	isDone: ({ status }) => hasStamp(status?.last_sync)
 };
 
 /**
@@ -299,8 +272,8 @@ const EXTENSION_STEP = {
 /**
  * The app's child/adult fork and Apple's Screen Time approval. iOS puts "Don't
  * Allow" in the blue button, hence the red lines. The `Mode` checkpoint is the one
- * place a mismatched answer ever shows, so it stays even once the step can tick
- * itself.
+ * place a mismatched answer ever shows. Nothing reports Screen Time, so it is the
+ * person's word.
  *
  * @type {InstallStep}
  */
@@ -331,10 +304,7 @@ const APP_SETUP_STEP = {
 	warnKeys: ['DeviceInstall.step_app_setup_child_2', 'DeviceInstall.step_app_setup_adult_2'],
 	checkpointKey: 'DeviceInstall.step_app_setup_checkpoint',
 	confirmLabelKey: 'DeviceInstall.confirm_seen',
-	// `attest` with a real `isDone`: it ticks itself when Screen Time reads
-	// approved, but no field reports the app's own fork, so it promises no wait.
-	confirm: 'attest',
-	isDone: ({ status }) => isFamilyControlsApproved(status?.family_controls_status)
+	confirm: 'attest'
 };
 
 /**
@@ -342,9 +312,7 @@ const APP_SETUP_STEP = {
  * device with no parent to approve Screen Time.
  *
  * `profile` evidence is asked for only on the adult path; a child device never
- * installs one and would read `installed: false` for ever. `installed_at` is
- * required as well as `installed`, which costs nothing if core keeps to its
- * documented shape and protects the tick if an ack row ever exists without one.
+ * installs one and would read `installed: false` for ever.
  *
  * @type {InstallStep}
  */
@@ -355,11 +323,8 @@ const PROFILE_STEP = {
 	instructionKeys: ['DeviceInstall.step_profile_1', 'DeviceInstall.step_profile_2'],
 	action: 'profile',
 	checkpointKey: 'DeviceInstall.step_profile_checkpoint',
-	confirmLabelKey: 'DeviceInstall.confirm_seen',
 	confirm: 'auto',
-	isDone: ({ profile }) => profile?.installed === true && !!profile.installed_at,
-	// The route is on `api-test` only; elsewhere it 404s and the answer is `null`.
-	isReported: ({ profile }) => profile !== null && profile !== undefined
+	isDone: ({ profile }) => profile?.installed === true && !!profile.installed_at
 };
 
 /**
@@ -401,7 +366,6 @@ const FILTER_ON_STEP = {
 		reach: 'anywhere'
 	},
 	noteKey: 'DeviceInstall.step_filter_on_note',
-	confirmLabelKey: 'DeviceInstall.confirm_seen',
 	confirm: 'auto',
 	isDone: ({ status }) => status?.protection === true
 };

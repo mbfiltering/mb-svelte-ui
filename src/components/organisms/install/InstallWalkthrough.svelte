@@ -14,27 +14,31 @@
 	 * on screen is waiting on the device (the link step, the profile, the filter),
 	 * every 15 otherwise, never behind a hidden tab, and not at all once every step
 	 * is done. On the adult path it also asks `api.getProfileStatus()` until the
-	 * profile is in, or until that route turns out not to exist (`null`).
+	 * profile is in.
 	 *
-	 * **Progress has two sources and they are not equal.** The device's own status
-	 * proves a step outright; everything else rests on someone pressing "I've done
-	 * this", remembered in localStorage (`utils/install/progress.js`) so leaving for
-	 * the App Store costs nobody their place. Device proof always wins.
+	 * **Two kinds of step.** A step the device proves (`confirm: 'auto'`) is done
+	 * when its status says so, and has no button: it waits. Every other step is
+	 * done when someone presses "I've done this", or when the device proves it
+	 * after the fact (installing the app, once the device links). Those
+	 * presses and the Adult or Child answer live in this component only, so they
+	 * last as long as it is mounted; nothing is written to the browser.
 	 *
 	 * **The pager.** One step on screen, opened on the first unfinished one. No Next
-	 * until the step on screen is done; Back is always open. The end of the control
-	 * row holds "I've done this" while a step is unfinished and Next once it is, so
-	 * the press that confirms and the press that pages land under the same finger.
+	 * until the step on screen is done; Previous is always open. The end of the
+	 * control row holds "I've done this" while a step the reader confirms is
+	 * unfinished and Next once it is, so the press that confirms and the press that
+	 * pages land under the same finger.
 	 * A finished step shows a small mark between them: a button to take a tick back,
 	 * or plain text when the device proved it (un-ticking would re-tick on the next
 	 * poll). The summary is the last page. Turning a page moves focus onto it.
+	 * The circles in the bar reach any step, finished or not.
 	 *
 	 * @typedef {object} InstallWalkthroughApi How this portal reaches core.
 	 * @property {() => Promise<Record<string, any> | null>} getStatus
 	 *   `GET /device/{id}/status`, or whatever the portal reads the same fields from.
-	 * @property {() => Promise<{ installed?: boolean, installed_at?: string } | null>} getProfileStatus
-	 *   Resolves `null` when the route is not there (404), so it is not asked again.
-	 * @property {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null, expiresAt?: number }>} getLink
+	 * @property {() => Promise<{ installed?: boolean, installed_at?: string }>} getProfileStatus
+	 *   `GET /device/{id}/apple/profile-install-status`.
+	 * @property {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 *   See `InstallLinkAction`.
 	 *
 	 * @prop {string} deviceId
@@ -57,15 +61,7 @@
 	import { language } from '../../../utils/i18n/languageStore.js';
 	import { loadInstallTranslations } from '../../../utils/install/i18n.js';
 	import { installStepsFor } from '../../../utils/install/steps.js';
-	import {
-		attestStep,
-		getAttestedSteps,
-		getInstallAccount,
-		installProgressPhraseKey,
-		setInstallAccount,
-		setInstallFinished,
-		unattestStep
-	} from '../../../utils/install/progress.js';
+	import { installProgressPhraseKey } from '../../../utils/install/progress.js';
 	import CircleButton from '../../atoms/CircleButton.svelte';
 	import ControlButton from '../../atoms/ControlButton.svelte';
 	import Island from '../../molecules/Island.svelte';
@@ -101,38 +97,39 @@
 
 	// svelte-ignore state_referenced_locally
 	let status = $state(initialStatus);
-	/** `undefined`: not asked yet. `null`: the route is not there. */
-	let profile = $state(/** @type {any} */ (undefined));
+	/** `null` until asked. */
+	let profile = $state(/** @type {any} */ (null));
 
 	let attested = $state(/** @type {string[]} */ ([]));
 	let accountKind = $state(/** @type {'child' | 'adult' | null} */ (null));
-	let loadedFor = $state('');
+	// Another device starts from nothing.
+	let answersFor = $state('');
 	$effect(() => {
-		if (deviceId && loadedFor !== deviceId) {
-			attested = getAttestedSteps(deviceId);
-			accountKind = getInstallAccount(deviceId);
-			loadedFor = deviceId;
+		if (answersFor !== deviceId) {
+			attested = [];
+			accountKind = null;
+			answersFor = deviceId;
 		}
 	});
 
 	const steps = $derived(installStepsFor(deviceType, accountKind, audience));
-	const evidence = $derived({ status, profile: profile ?? null });
+	const evidence = $derived({ status, profile });
+
+	/** @param {import('../../../utils/install/steps.js').InstallStep} step */
+	const isStepDone = (step) =>
+		step.confirm === 'auto'
+			? (step.isDone?.(evidence) ?? false)
+			: (step.isDone?.(evidence) ?? false) || attested.includes(step.id);
 
 	const stepStates = $derived(
 		steps.map((step) => {
 			const confirmedByDevice = step.isDone?.(evidence) ?? false;
-			return { confirmedByDevice, done: confirmedByDevice || attested.includes(step.id) };
+			return { confirmedByDevice, done: isStepDone(step) };
 		})
 	);
 	const firstUnfinished = $derived(stepStates.findIndex((state) => !state.done));
 	const allDone = $derived(steps.length > 0 && firstUnfinished === -1);
 	const completedCount = $derived(firstUnfinished === -1 ? steps.length : firstUnfinished);
-
-	// The finished mark is written here and nowhere else. Guarded on there being
-	// steps, so a not-yet-loaded walkthrough does not clear an earlier mark.
-	$effect(() => {
-		if (steps.length > 0) setInstallFinished(deviceId, allDone);
-	});
 
 	const summaryIndex = $derived(steps.length);
 	let viewIndex = $state(-1);
@@ -151,16 +148,11 @@
 
 	/** Is the step on screen waiting on the device right now? Then ask often. */
 	const waitingOnDevice = $derived(
-		!!currentStep &&
-			!currentState?.done &&
-			currentStep.confirm === 'auto' &&
-			(currentStep.isReported?.(evidence) ?? true)
+		!!currentStep && !currentState?.done && currentStep.confirm === 'auto'
 	);
 
 	const wantsProfile = $derived(
-		accountKind === 'adult' &&
-			profile !== null &&
-			!(profile?.installed === true && profile?.installed_at)
+		accountKind === 'adult' && !(profile?.installed === true && profile?.installed_at)
 	);
 
 	let refreshing = false;
@@ -170,10 +162,7 @@
 		try {
 			const next = await api.getStatus().catch(() => null);
 			if (next) status = next;
-			if (wantsProfile) {
-				// A failure keeps what we had; only a definite `null` stops the asking.
-				profile = await api.getProfileStatus().catch(() => profile);
-			}
+			if (wantsProfile) profile = (await api.getProfileStatus().catch(() => null)) ?? profile;
 		} finally {
 			refreshing = false;
 		}
@@ -201,7 +190,7 @@
 
 	// Choosing adult asks for the profile straight away rather than on the next tick.
 	$effect(() => {
-		if (wantsProfile && profile === undefined) refresh();
+		if (wantsProfile && profile === null) refresh();
 	});
 
 	let actionPending = $state(false);
@@ -230,10 +219,8 @@
 	 * @param {string} stepId
 	 */
 	function handleAttest(stepId) {
-		attested = attestStep(deviceId, stepId);
-		const states = steps.map((step) => ({
-			done: (step.isDone?.(evidence) ?? false) || attested.includes(step.id)
-		}));
+		if (!attested.includes(stepId)) attested = [...attested, stepId];
+		const states = steps.map((step) => ({ done: isStepDone(step) }));
 		const ahead = states.findIndex((state, index) => index >= currentIndex && !state.done);
 		const gap = states.findIndex((state) => !state.done);
 		goTo(ahead !== -1 ? ahead : gap !== -1 ? gap : summaryIndex);
@@ -241,7 +228,7 @@
 
 	/** @param {string} stepId */
 	function handleUndo(stepId) {
-		attested = unattestStep(deviceId, stepId);
+		attested = attested.filter((id) => id !== stepId);
 		focusPage();
 	}
 
@@ -255,7 +242,6 @@
 		if (kind === accountKind) return;
 		const readingId = onSummary ? null : currentStep?.id;
 		accountKind = kind;
-		setInstallAccount(deviceId, kind);
 		if (!readingId) return;
 		const next = installStepsFor(deviceType, kind, audience).findIndex((step) => step.id === readingId);
 		if (next !== -1) viewIndex = next;
@@ -334,7 +320,6 @@
 							<InstallStepPanel
 								step={currentStep}
 								done={currentState.done}
-								{evidence}
 								{deviceId}
 								{devicePin}
 								{accountKind}
@@ -401,7 +386,7 @@
 							className="flex-row-reverse"
 							onclick={() => goTo(currentIndex + 1)}
 						/>
-					{:else if canConfirm}
+					{:else if canConfirm && currentStep.confirm === 'attest'}
 						<CircleButton
 							color="azure"
 							label={$t(currentStep.confirmLabelKey ?? 'DeviceInstall.mark_done')}
