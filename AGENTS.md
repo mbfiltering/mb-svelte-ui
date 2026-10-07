@@ -523,10 +523,10 @@ same flow" in the customer portal (its `/install` page) and the technician porta
 pager this subtle would drift. The reasoning behind the steps and their wording is
 in `mb-specs/tasks/ios-v2/`; read `ios-v2-status.md` there before changing a step.
 
-- **The host passes `api`, nothing else about core.** The two portals reach the same
-  credentials by different routes (the customer token for the enrolment code and a
-  profile link kept from creation; the technician portal signs in as the device), so
-  the component never names a route. Keep it that way.
+- **The host passes `api`, nothing else about core.** Both portals ask the same
+  customer routes, the technician portal over its admin token after unlocking the
+  device, but each wraps them its own way, so the component never names a route.
+  Keep it that way.
 - **Link first, profile last.** Every device redeems an enrolment code straight after
   the app is installed; its first heartbeat stamps `status.last_sync`, which is what
   the link step and everything after it watch. Moving the link step later throws away
@@ -539,8 +539,11 @@ in `mb-specs/tasks/ios-v2/`; read `ios-v2-status.md` there before changing a ste
   `mb-specs/dev-resources/i18n-exceptions.json` are addressed `ui:DeviceInstall.*`.
   Adding a key is a six-file edit here, and no app may re-author a `DeviceInstall`
   key, for the reason given under i18n above.
-- **localStorage keys are shared with the pre-move customer portal** and must not be
-  renamed, or walkthroughs in progress lose their place.
+- **Nothing is kept in the browser, and there are no fallbacks** (the owner,
+  2026-10-07). Ticks and the Adult or Child answer live in the component while it
+  is mounted. A step the device proves (link, profile, filter) waits for it and has
+  no manual tick; a missing route or field is an error, not a reason to guess. Do not
+  add localStorage, a "kept" link or a field core does not send.
 
 ---
 
