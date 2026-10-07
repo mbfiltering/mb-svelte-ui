@@ -2158,7 +2158,9 @@ Complex components with significant functionality.
 ### InstallWalkthrough
 
 The iOS v2 install walkthrough, one step at a time: a progress bar whose phrase is
-a heading, the step on screen, and a control row (Back, a done mark, "I've done
+a heading and whose track carries a numbered circle per step (filled when done,
+ringed when on screen, each a button to that step; the list, and so the circles,
+follow the adult or child answer), the step on screen, and a control row (Back, a done mark, "I've done
 this" or Next). **One component for both portals**: the customer portal renders it
 as its `/install` page, the technician portal in the "iOS v2 setup" popup. The
 steps and their order are data in `@mbsmart/ui/install` (`installStepsFor`), and
@@ -2293,8 +2295,7 @@ button — modal-level, so it is in the same place whatever the content is, and 
 takes the trailing corner itself when `showCloseButton` is `false`. Minimizing
 flies the dialog into the **bottom-leading corner** (bottom-left, bottom-right
 under RTL) over 300ms and crossfades in a chip carrying `minimizedLabel ||
-ariaLabel`, a restore button (`SquareArrowOutUpRight`, mirrored to
-`SquareArrowOutUpLeft` under RTL) and, when `showCloseButton` is set, a close
+ariaLabel`, a restore button (`Expand`, the same either way round) and, when `showCloseButton` is set, a close
 button, and wearing a 2px `azure-500` / `azure-400` border so it reads against
 whatever it is sitting on top of. Several minimized modals **stack upwards** in
 that corner in the order they were minimized, and the stack closes up — with

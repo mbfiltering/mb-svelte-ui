@@ -282,11 +282,14 @@
 	{:else}
 		<div class="space-y-4">
 			<InstallProgressBar
-				total={steps.length}
+				titles={steps.map((step) => $t(step.titleKey))}
+				done={stepStates.map((state) => state.done)}
 				{currentIndex}
 				completed={completedCount}
 				{phrase}
 				label={barLabel}
+				stepsLabel={$t('DeviceInstall.steps_label')}
+				onselect={goTo}
 				{headingLevel}
 			/>
 

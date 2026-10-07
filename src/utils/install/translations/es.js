@@ -7,6 +7,7 @@ export const translations = {
 	DeviceInstall: {
 		bar_label: "{percent}% completado. Está viendo el paso {current} de {total}.",
 		bar_label_summary: "Los {total} pasos están hechos. Está en la última página.",
+		steps_label: "Pasos",
 		progress_start: "No le llevará mucho tiempo",
 		progress_going: "Va por buen camino",
 		progress_halfway: "Más de la mitad",

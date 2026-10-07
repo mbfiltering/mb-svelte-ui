@@ -7,6 +7,7 @@ export const translations = {
 	DeviceInstall: {
 		bar_label: "{percent}% פֿאַרענדיקט. איר קוקט אויף שריט {current} פֿון {total}.",
 		bar_label_summary: "אַלע {total} שריט זײַנען געטאָן. דאָס איז דער לעצטער בלאַט.",
+		steps_label: "שריט",
 		progress_start: "עס װעט נישט געדויערן לאַנג",
 		progress_going: "איר גייט אָן גוט",
 		progress_halfway: "מער װי האַלב",

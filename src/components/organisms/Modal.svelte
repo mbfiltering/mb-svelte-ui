@@ -1,5 +1,5 @@
 <script>
-	import { X, Minus, SquareArrowOutUpLeft, SquareArrowOutUpRight } from '@lucide/svelte';
+	import { X, Minus, Expand } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import { on } from 'svelte/events';
 	import minimizedModals, {
@@ -458,11 +458,7 @@
 						aria-label={maximizeLabel}
 						title={maximizeLabel}
 					>
-						{#if isRtl}
-							<SquareArrowOutUpLeft size={18} aria-hidden="true" />
-						{:else}
-							<SquareArrowOutUpRight size={18} aria-hidden="true" />
-						{/if}
+						<Expand size={18} aria-hidden="true" />
 					</button>
 					{#if showCloseButton}
 						<button
