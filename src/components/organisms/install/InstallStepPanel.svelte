@@ -3,13 +3,14 @@
 	 * The one step on screen: its title, the question where it has one, the
 	 * numbered instructions, a fixed link, a note, the credential QR, the
 	 * troubleshooting line, the checkpoint, and the device's own confirmation or
-	 * the line saying the page is waiting for it. Back, Next and "I've done this"
+	 * the line saying the page is waiting for it. Previous, Next and "I've done this"
 	 * are the walkthrough's control row, not this panel's.
 	 *
 	 * **Only `setup_kind` asks the child or adult question.** Steps that depend on
-	 * the answer state it back with a "Change this" beside it, which swaps the
-	 * sentence for the buttons in place. "I don't know, show me" is a third button
-	 * that records nothing and opens `AccountKindHelp`.
+	 * the answer just show its lines (the owner, 2026-10-07: no "You said this
+	 * device is on…"); the answer is changed on the first step, which the bar's
+	 * first circle reaches. "I don't know, show me" is a third button that records
+	 * nothing and opens `AccountKindHelp`, beside the walkthrough, not inside it.
 	 *
 	 * Every line is drawn through `RichText`, so the labels the reader has to find
 	 * on a phone screen are bold.
@@ -62,12 +63,7 @@
 
 	/** One figure at two heights: the only thing an icon can say about an account. */
 	const ACCOUNT_ICON_HEIGHT = { adult: 'h-11', child: 'h-8' };
-	const ACCOUNT_ICON_ROW = 'flex h-12 items-end justify-center text-gray-700 dark:text-gray-300';
-
-	const RECALL_KEYS = {
-		adult: 'DeviceInstall.account_recall_adult',
-		child: 'DeviceInstall.account_recall_child'
-	};
+	const ACCOUNT_ICON_ROW = 'flex h-12 items-center justify-center text-gray-700 dark:text-gray-300';
 
 	const questionId = $props.id();
 
@@ -79,10 +75,7 @@
 	let helpOpen = $state(false);
 	/** The reader asked for a finished step's QR again, to relink or reinstall. */
 	let again = $state(false);
-	/** The reader asked to change an answer they already gave. */
-	let changing = $state(false);
-
-	const asking = $derived(!!step.question && (step.question.asks || !accountKind || changing));
+	const asking = $derived(!!step.question && (step.question.asks || !accountKind));
 	const labelIsHeading = $derived(step.question?.labelKey === step.titleKey);
 	const chosen = $derived(accountKind ? step.question?.options[accountKind] : undefined);
 	const instructionKeys = $derived(step.instructionKeys ?? chosen?.instructionKeys ?? []);
@@ -110,7 +103,6 @@
 
 	/** @param {'child' | 'adult'} kind */
 	function chooseAccount(kind) {
-		changing = false;
 		onChooseAccount(kind);
 	}
 
@@ -190,17 +182,6 @@
 						</span>
 					</button>
 				</div>
-			{:else if accountKind}
-				<p class="text-sm text-gray-600 dark:text-gray-300">
-					{$t(RECALL_KEYS[accountKind])}
-					<button
-						type="button"
-						class="cursor-pointer text-azure-700 underline-offset-2 hover:underline dark:text-azure-400"
-						onclick={() => (changing = true)}
-					>
-						{$t('DeviceInstall.account_change')}
-					</button>
-				</p>
 			{/if}
 		</div>
 	{/if}

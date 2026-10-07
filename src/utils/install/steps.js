@@ -224,8 +224,7 @@ const INSTALL_APP_STEP = {
 	titleKey: 'DeviceInstall.step_install_app_title',
 	instructionKeys: [
 		'DeviceInstall.step_install_app_1',
-		'DeviceInstall.step_install_app_2',
-		'DeviceInstall.step_install_app_3'
+		'DeviceInstall.step_install_app_2'
 	],
 	link: {
 		url: APP_STORE_URL,
@@ -286,7 +285,6 @@ const LINK_STEP = {
 const EXTENSION_STEP = {
 	id: 'extension',
 	titleKey: 'DeviceInstall.step_extension_title',
-	bodyKey: 'DeviceInstall.step_extension_body',
 	instructionKeys: [
 		'DeviceInstall.step_extension_1',
 		'DeviceInstall.step_extension_2',
@@ -322,8 +320,7 @@ const APP_SETUP_STEP = {
 				...ACCOUNT_LABELS.adult,
 				instructionKeys: [
 					'DeviceInstall.step_app_setup_adult_1',
-					'DeviceInstall.step_app_setup_adult_2',
-					'DeviceInstall.step_app_setup_adult_3'
+					'DeviceInstall.step_app_setup_adult_2'
 				]
 			}
 		}
@@ -375,7 +372,6 @@ const PROFILE_STEP = {
 const TRUST_STEP = {
 	id: 'trust',
 	titleKey: 'DeviceInstall.step_trust_title',
-	bodyKey: 'DeviceInstall.step_trust_body',
 	instructionKeys: ['DeviceInstall.step_trust_1', 'DeviceInstall.step_trust_2'],
 	confirm: 'attest'
 };

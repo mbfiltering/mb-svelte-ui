@@ -30,8 +30,22 @@
 		minimizeLabel = 'Minimize modal', // aria-label/title for the minimize button
 		maximizeLabel = 'Restore modal', // aria-label/title for the restore button
 		minimizedLabel = '', // Text on the minimized chip; falls back to `ariaLabel`
+		portal = false, // Render under <body>, beside any modal it was opened from rather than inside it
 		children = undefined
 	} = $props();
+
+	/**
+	 * A modal opened from inside another one is otherwise drawn inside it: the
+	 * outer dialog's minimize transform carries it off into the chip, and its
+	 * backdrop clicks bubble into the outer one's. Under <body> it is a sibling,
+	 * stacked on top; the active stack already gives it the keys.
+	 *
+	 * @param {HTMLElement} node
+	 */
+	function toBody(node) {
+		document.body.appendChild(node);
+		return () => node.remove();
+	}
 
 	// Swipe-to-dismiss state (mobile bottom-sheet)
 	let dragY = $state(0);
@@ -361,6 +375,7 @@
 			? 'z-60 pointer-events-none bg-transparent'
 			: 'z-50 bg-neutral-900/40 dark:bg-neutral-900/60'}"
 		onclick={handleBackdropClick}
+		{@attach portal ? toBody : undefined}
 	>
 		<!-- Modal Content Container -->
 		<div

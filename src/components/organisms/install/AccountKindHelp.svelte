@@ -27,6 +27,7 @@
 <ModalIsland
 	{isOpen}
 	{onClose}
+	portal
 	icon={CircleHelp}
 	title={$t('DeviceInstall.account_help_title')}
 	closeLabel={$t('DeviceInstall.close')}

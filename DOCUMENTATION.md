@@ -2160,7 +2160,7 @@ Complex components with significant functionality.
 The iOS v2 install walkthrough, one step at a time: a progress bar whose phrase is
 a heading and whose track carries a numbered circle per step (filled when done,
 ringed when on screen, each a button to that step; the list, and so the circles,
-follow the adult or child answer), the step on screen, and a control row (Back, a done mark, "I've done
+follow the adult or child answer), the step on screen, and a control row (Previous, a done mark, "I've done
 this" or Next). **One component for both portals**: the customer portal renders it
 as its `/install` page, the technician portal in the "iOS v2 setup" popup. The
 steps and their order are data in `@mbsmart/ui/install` (`installStepsFor`), and
