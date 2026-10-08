@@ -34,7 +34,6 @@
 		collapsible={false}
 		scrollBody
 		className="rounded-b-none sm:rounded-b-xl"
-	>
-		{@render children?.()}
-	</Island>
+		{children}
+	/>
 </Modal>
