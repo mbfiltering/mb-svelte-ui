@@ -94,6 +94,30 @@ export function isAppleMobileBrowser() {
 	return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
 }
 
+/**
+ * @typedef {'auto' | 'both' | 'button'} InstallHandover How a link that only the
+ *   phone can act on is handed to it, which depends on where the portal is read:
+ *   - `auto`: a QR code, plus a button when this browser is an iPhone or iPad.
+ *     The technician portal, read on a computer beside the phone.
+ *   - `both`: a QR code and a button, on every browser. The customer portal,
+ *     read on a computer or on the phone itself.
+ *   - `button`: a button only. The device portal, which is opened on the phone
+ *     being set up.
+ */
+
+/**
+ * What to draw for a link only the phone can act on.
+ *
+ * @param {InstallHandover} handover
+ * @returns {{ qr: boolean, button: boolean }}
+ */
+export function handoverParts(handover) {
+	return {
+		qr: handover !== 'button',
+		button: handover !== 'auto' || isAppleMobileBrowser()
+	};
+}
+
 /** MB Smart Protect on the App Store. */
 export const APP_STORE_URL = 'https://apps.apple.com/app/mb-smart-protect/id6785542929';
 

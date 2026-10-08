@@ -1,6 +1,7 @@
 <script>
 	/**
-	 * The portal's half of a step: getting a credential onto the phone as a QR code.
+	 * The portal's half of a step: getting a credential onto the phone, as a QR code,
+	 * a button that opens it in place, or both (`handover`).
 	 *
 	 * Two kinds, one structure (mount, fetch, QR, renew on a clock, four outcomes):
 	 * `enroll` is the app's `mbsmart://` deep link, `profile` the Apple
@@ -22,6 +23,7 @@
 	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 *   Resolves with the raw link; rejects with an error carrying `status` (403:
 	 *   refused) or anything else for a failure.
+	 * @prop {import('../../../utils/install/links.js').InstallHandover} [handover]
 	 * @prop {boolean} [showCopy] A "Copy link" button under the QR, for a
 	 *   technician who is sending the link to someone rather than holding the phone.
 	 * @prop {(pending: boolean) => void} [onPending] True while there is nothing on
@@ -33,7 +35,7 @@
 	import {
 		buildConfigLink,
 		buildEnrollLink,
-		isAppleMobileBrowser,
+		handoverParts,
 		CONFIG_LINK_TTL_MS,
 		ENROLL_CODE_TTL_MS
 	} from '../../../utils/install/links.js';
@@ -42,7 +44,7 @@
 	import ControlButton from '../../atoms/ControlButton.svelte';
 	import QrCode from '../../atoms/QrCode.svelte';
 
-	let { deviceId, kind, getLink, showCopy = false, onPending } = $props();
+	let { deviceId, kind, getLink, handover = 'auto', showCopy = false, onPending } = $props();
 
 	const VARIANTS = {
 		enroll: {
@@ -51,6 +53,8 @@
 			icon: Smartphone,
 			qrLabel: 'DeviceInstall.enroll_qr_label',
 			creating: 'DeviceInstall.enroll_creating',
+			// No QR is being made when there is none to draw.
+			creatingLink: 'DeviceInstall.enroll_creating_link',
 			openHere: 'DeviceInstall.enroll_open_here',
 			error: 'DeviceInstall.enroll_error',
 			locked: 'DeviceInstall.enroll_locked'
@@ -61,6 +65,7 @@
 			icon: Download,
 			qrLabel: 'DeviceInstall.profile_qr_label',
 			creating: 'DeviceInstall.profile_creating',
+			creatingLink: 'DeviceInstall.profile_creating',
 			openHere: 'DeviceInstall.profile_open_here',
 			error: 'DeviceInstall.profile_error',
 			locked: 'DeviceInstall.profile_locked'
@@ -134,17 +139,22 @@
 		}
 	}
 
-	const canOpenHere = isAppleMobileBrowser();
+	// The browser does not change under the reader.
+	// svelte-ignore state_referenced_locally
+	const parts = handoverParts(handover);
+	const creatingKey = parts.qr ? variant.creating : variant.creatingLink;
 </script>
 
 <div class="space-y-3">
 	{#if link}
-		<div class="mx-auto max-w-60">
-			<QrCode value={link} label={$t(variant.qrLabel)} />
-		</div>
-		{#if canOpenHere || showCopy}
+		{#if parts.qr}
+			<div class="mx-auto max-w-60">
+				<QrCode value={link} label={$t(variant.qrLabel)} />
+			</div>
+		{/if}
+		{#if parts.button || showCopy}
 			<div class="flex flex-wrap justify-center gap-2">
-				{#if canOpenHere}
+				{#if parts.button}
 					<ControlButton color="azure" onclick={openHere}>
 						<OpenIcon size={16} aria-hidden="true" />
 						{$t(variant.openHere)}
@@ -169,7 +179,7 @@
 			<ControlButton
 				color="azure"
 				loading={fetching}
-				loadingLabel={$t(variant.creating)}
+				loadingLabel={$t(creatingKey)}
 				onclick={fetchLink}
 			>
 				{$t('DeviceInstall.try_again')}
@@ -178,7 +188,7 @@
 	{:else}
 		<p class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
 			<Loader size={16} class="shrink-0 animate-spin" aria-hidden="true" />
-			<span>{$t(variant.creating)}</span>
+			<span>{$t(creatingKey)}</span>
 		</p>
 	{/if}
 </div>

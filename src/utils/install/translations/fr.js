@@ -121,6 +121,17 @@ export const translations = {
 		copy_link: "Copier le lien",
 		link_copied: "Lien copié dans le presse-papiers",
 		enroll_again: "Le relier à nouveau",
-		profile_again: "Télécharger à nouveau le profil"
+		profile_again: "Télécharger à nouveau le profil",
+		step_link_1_both: "Scannez le code QR ci-dessous avec l'appareil photo de l'appareil que vous configurez. Si vous lisez ceci sur cet appareil, touchez plutôt **Ouvrir MB Smart sur cet appareil**.",
+		step_link_1_button: "Touchez **Ouvrir MB Smart sur cet appareil** ci-dessous.",
+		step_profile_1_both: "Scannez le code QR ci-dessous avec l'appareil photo de l'appareil que vous configurez. Si vous lisez ceci sur cet appareil, touchez plutôt **Télécharger le profil sur cet appareil**.",
+		step_profile_1_button: "Touchez **Télécharger le profil sur cet appareil** ci-dessous.",
+		link_troubleshoot_both: "Rien ne s'est passé ? Vérifiez que **MB Smart Protect** est installée, puis scannez à nouveau le code ou touchez à nouveau le bouton. Chaque code ne sert qu'une fois, et cette page en crée un nouveau toutes les quelques minutes.",
+		link_troubleshoot_button: "Rien ne s'est passé en touchant le bouton ? Vérifiez que **MB Smart Protect** est installée, puis touchez-le à nouveau. Chaque lien ne sert qu'une fois, et cette page en crée un nouveau toutes les quelques minutes.",
+		enroll_creating_link: "Préparation du lien…",
+		step_filter_on_1_here: "Touchez **Activer le filtre** ci-dessous.",
+		filter_on_button: "Activer le filtre",
+		filter_on_working: "Activation du filtre…",
+		filter_on_error: "Le filtre n'a pas pu être activé. Veuillez réessayer."
 	}
 };

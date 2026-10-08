@@ -121,6 +121,17 @@ export const translations = {
 		copy_link: "Copy link",
 		link_copied: "Link copied to clipboard",
 		enroll_again: "Link it again",
-		profile_again: "Download the profile again"
+		profile_again: "Download the profile again",
+		step_link_1_both: "Scan the QR code below with the camera on the device you are setting up. If you are reading this on that device, tap **Open MB Smart on this device** instead.",
+		step_link_1_button: "Tap **Open MB Smart on this device** below.",
+		step_profile_1_both: "Scan the QR code below with the camera on the device you are setting up. If you are reading this on that device, tap **Download the profile on this device** instead.",
+		step_profile_1_button: "Tap **Download the profile on this device** below.",
+		link_troubleshoot_both: "Nothing happened? Check that **MB Smart Protect** is installed, then scan the code or tap the button again. Each code works once, and this page makes a fresh one every few minutes.",
+		link_troubleshoot_button: "Nothing happened when you tapped it? Check that **MB Smart Protect** is installed, then tap the button again. Each link works once, and this page makes a fresh one every few minutes.",
+		enroll_creating_link: "Getting the link ready…",
+		step_filter_on_1_here: "Tap **Turn on the filter** below.",
+		filter_on_button: "Turn on the filter",
+		filter_on_working: "Turning on the filter…",
+		filter_on_error: "The filter could not be turned on. Please try again."
 	}
 };

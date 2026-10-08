@@ -2,8 +2,9 @@
  * The iOS v2 install walkthrough, as data.
  *
  * Shared by the customer portal (`/customer/devices/device/{id}/install`) and the
- * technician portal (the "iOS v2 setup" popup on an iOS device), which is why it
- * lives here: MHomsany asked for "the exact same flow" in both, and two copies of
+ * technician portal (the "iOS v2 setup" popup on an iOS device), and the device
+ * portal (`/{device_id}/install`, on the phone itself), which is why it lives
+ * here: MHomsany asked for "the exact same flow" in each, and two copies of
  * a list this size drift. The reasoning behind each step's wording is recorded in
  * `mb-specs/tasks/ios-v2/`; this file keeps only what the code needs to say.
  *
@@ -92,6 +93,8 @@
  * @property {string} [confirmedKey] The control row's words once the device proves
  *   it, in place of "Confirmed by the device".
  * @property {(evidence: InstallStepEvidence) => boolean} [isDone]
+ * @property {boolean} [filterSwitch] The step offers a button that turns the
+ *   filter on from here; see `installStepsFor`'s `filterHere`.
  */
 
 import { APP_STORE_URL, DEVICE_PORTAL_URL } from './links.js';
@@ -462,6 +465,66 @@ function technicianStep(step) {
 }
 
 /**
+ * The lines that say "scan the QR code", for a portal that also or only draws a
+ * button (`InstallHandover` in `links.js`). `auto` keeps the scanning lines:
+ * the technician reads them on a computer.
+ */
+const HANDOVER_LINES = /** @type {Record<string, Record<string, string>>} */ ({
+	both: {
+		'DeviceInstall.step_link_1': 'DeviceInstall.step_link_1_both',
+		'DeviceInstall.step_profile_1': 'DeviceInstall.step_profile_1_both',
+		'DeviceInstall.link_troubleshoot': 'DeviceInstall.link_troubleshoot_both'
+	},
+	button: {
+		'DeviceInstall.step_link_1': 'DeviceInstall.step_link_1_button',
+		'DeviceInstall.step_profile_1': 'DeviceInstall.step_profile_1_button',
+		'DeviceInstall.link_troubleshoot': 'DeviceInstall.link_troubleshoot_button'
+	}
+});
+
+/**
+ * @param {InstallStep} step
+ * @param {Record<string, string>} lines
+ * @returns {InstallStep}
+ */
+function withLines(step, lines) {
+	const swap = (/** @type {string} */ key) => lines[key] ?? key;
+	const next = { ...step };
+	if (step.instructionKeys) next.instructionKeys = step.instructionKeys.map(swap);
+	if (step.troubleshootKey) next.troubleshootKey = swap(step.troubleshootKey);
+	return next;
+}
+
+/**
+ * The last step where the filter is turned on from the walkthrough itself: the
+ * device portal, which is where the customer's copy sends them. A button in
+ * place of the way there, and no PIN, since this portal is already open.
+ *
+ * @param {InstallStep} step
+ * @returns {InstallStep}
+ */
+function filterHereStep(step) {
+	if (step.id !== 'filter_on') return step;
+	const { link: _link, noteKey: _note, ...rest } = step;
+	return {
+		...rest,
+		instructionKeys: (step.instructionKeys ?? [])
+			.filter((key) => key !== PIN_LINE.key)
+			.map((key) =>
+				key === 'DeviceInstall.step_filter_on_1' ? 'DeviceInstall.step_filter_on_1_here' : key
+			),
+		filterSwitch: true
+	};
+}
+
+/**
+ * @typedef {object} InstallStepOptions
+ * @property {import('./links.js').InstallHandover} [handover] How links reach
+ *   the phone, which decides whether a line says to scan or to tap.
+ * @property {boolean} [filterHere] The portal can turn the filter on itself.
+ */
+
+/**
  * The procedure for a device, or an empty list where there is none. An
  * unanswered question gets the shorter (child-shaped) list; answering adult
  * inserts supervision and the profile.
@@ -469,9 +532,24 @@ function technicianStep(step) {
  * @param {string | undefined | null} deviceType
  * @param {InstallAccountKind | null} [accountKind]
  * @param {InstallAudience} [audience]
+ * @param {InstallStepOptions} [options]
  * @returns {InstallStep[]}
  */
-export function installStepsFor(deviceType, accountKind, audience = 'customer') {
+export function installStepsFor(deviceType, accountKind, audience = 'customer', options = {}) {
+	const lines = HANDOVER_LINES[options.handover ?? 'auto'];
+	let steps = forAudience(deviceType, accountKind, audience);
+	if (lines) steps = steps.map((step) => withLines(step, lines));
+	if (options.filterHere) steps = steps.map(filterHereStep);
+	return steps;
+}
+
+/**
+ * @param {string | undefined | null} deviceType
+ * @param {InstallAccountKind | null | undefined} accountKind
+ * @param {InstallAudience} audience
+ * @returns {InstallStep[]}
+ */
+function forAudience(deviceType, accountKind, audience) {
 	if (!hasInstallSteps(deviceType)) return [];
 	const head = [SETUP_KIND_STEP, PREREQUISITES_STEP];
 	const middle = [INSTALL_APP_STEP, LINK_STEP, EXTENSION_STEP, APP_SETUP_STEP];

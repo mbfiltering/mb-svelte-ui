@@ -2,12 +2,14 @@
 	/**
 	 * The iOS v2 install walkthrough, one step at a time.
 	 *
-	 * **One component, two portals.** The customer portal renders it as the
+	 * **One component, three portals.** The customer portal renders it as the
 	 * `/install` page; the technician portal renders it in the "iOS v2 setup" popup
-	 * on an iOS device. MHomsany asked for "the exact same flow" in both, so the
-	 * steps, the copy and the behaviour live here and each portal passes in only
-	 * what genuinely differs: how it reaches the API (`api`), what the done button
-	 * says and does, and where the walkthrough sits in its page's headings.
+	 * on an iOS device; the device portal renders it as its `/install` page, on the
+	 * phone being set up. MHomsany asked for "the exact same flow" in all of them,
+	 * so the steps, the copy and the behaviour live here and each portal passes in
+	 * only what genuinely differs: how it reaches the API (`api`), what the done
+	 * button says and does, where the walkthrough sits in its page's headings, and
+	 * how a link reaches the phone (`handover`).
 	 *
 	 * **It watches the device itself.** It asks `api.getStatus()` on arrival and
 	 * then on a clock while anything is unfinished: every 5 seconds while the step
@@ -40,6 +42,9 @@
 	 *   `GET /device/{id}/apple/profile-install-status`.
 	 * @property {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 *   See `InstallLinkAction`.
+	 * @property {() => Promise<void>} [turnFilterOn] Only where the portal can turn
+	 *   the filter on itself (the device portal). The last step then offers a
+	 *   button for it instead of sending the reader to the device portal.
 	 *
 	 * @prop {string} deviceId
 	 * @prop {string} deviceType
@@ -54,6 +59,9 @@
 	 * @prop {'customer' | 'technician'} [audience] Who reads it. `technician`
 	 *   drops the lines that send the reader to MB Smart support, the time it takes
 	 *   and the device portal; see `installStepsFor`.
+	 * @prop {import('../../../utils/install/links.js').InstallHandover} [handover]
+	 *   `auto` (the technician), `both` (the customer portal) or `button` (the
+	 *   device portal); see `links.js`.
 	 */
 	import { onMount, tick } from 'svelte';
 	import { BadgeCheck, Check, ChevronLeft, ChevronRight } from '@lucide/svelte';
@@ -81,7 +89,8 @@
 		closeHint = false,
 		showCopy = false,
 		framed = true,
-		audience = 'customer'
+		audience = 'customer',
+		handover = 'auto'
 	} = $props();
 
 	const FAST_POLL_MS = 5_000;
@@ -120,7 +129,8 @@
 		}
 	});
 
-	const steps = $derived(installStepsFor(deviceType, accountKind, audience));
+	const stepOptions = $derived({ handover, filterHere: !!api.turnFilterOn });
+	const steps = $derived(installStepsFor(deviceType, accountKind, audience, stepOptions));
 	const evidence = $derived({ status, profile, now: readAt });
 
 	$effect(() => {
@@ -253,7 +263,7 @@
 		const readingId = onSummary ? null : currentStep?.id;
 		accountKind = kind;
 		if (!readingId) return;
-		const next = installStepsFor(deviceType, kind, audience).findIndex((step) => step.id === readingId);
+		const next = installStepsFor(deviceType, kind, audience, stepOptions).findIndex((step) => step.id === readingId);
 		if (next !== -1) viewIndex = next;
 	}
 
@@ -267,6 +277,12 @@
 					total: steps.length
 				})
 	);
+
+	/** Turns the filter on, then looks at once, so the step ticks without waiting. */
+	async function turnFilterOn() {
+		await api.turnFilterOn?.();
+		await refresh();
+	}
 
 	/** Say "protecting" only when the device says the filter is on. */
 	const protectedNow = $derived(status?.protection === true);
@@ -337,6 +353,8 @@
 								onActionPending={(/** @type {boolean} */ pending) => (actionPending = pending)}
 								getLink={api.getLink}
 								{showCopy}
+								{handover}
+								turnFilterOn={api.turnFilterOn ? turnFilterOn : undefined}
 								headingLevel={headingLevel + 1}
 							/>
 						{/key}

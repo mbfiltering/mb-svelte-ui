@@ -20,6 +20,10 @@
 	 * "Download the profile again" button brings it back (MHomsany, 2026-10-06:
 	 * an already-linked device has to be relinkable).
 	 *
+	 * **The filter can be turned on from here** where the portal can do it (the
+	 * device portal): the last step then has a button instead of a way to the
+	 * device portal. The device confirms the step, as everywhere else.
+	 *
 	 * @prop {import('../../../utils/install/steps.js').InstallStep} step
 	 * @prop {boolean} done
 	 * @prop {string} deviceId
@@ -29,9 +33,12 @@
 	 * @prop {(pending: boolean) => void} onActionPending
 	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 * @prop {boolean} [showCopy]
+	 * @prop {import('../../../utils/install/links.js').InstallHandover} [handover]
+	 * @prop {() => Promise<void>} [turnFilterOn] For a step with `filterSwitch`:
+	 *   rejects when the filter could not be turned on.
 	 * @prop {2 | 3 | 4} [headingLevel]
 	 */
-	import { CircleHelp, Loader, QrCode } from '@lucide/svelte';
+	import { CircleHelp, Loader, Power, QrCode, RotateCw } from '@lucide/svelte';
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { MODE_LABELS, PIN_LINE } from '../../../utils/install/steps.js';
 	import Callout from '../../atoms/Callout.svelte';
@@ -51,6 +58,8 @@
 		onActionPending,
 		getLink,
 		showCopy = false,
+		handover = 'auto',
+		turnFilterOn,
 		headingLevel = 2
 	} = $props();
 
@@ -102,6 +111,23 @@
 
 	/** @param {string} key */
 	const isWarn = (key) => step.warnKeys?.includes(key);
+
+	const showFilterSwitch = $derived(!!step.filterSwitch && !!turnFilterOn && !done);
+	let switchingOn = $state(false);
+	let filterFailed = $state(false);
+
+	async function switchFilterOn() {
+		if (!turnFilterOn) return;
+		switchingOn = true;
+		filterFailed = false;
+		try {
+			await turnFilterOn();
+		} catch {
+			filterFailed = true;
+		} finally {
+			switchingOn = false;
+		}
+	}
 </script>
 
 {#snippet person(/** @type {string} */ height)}
@@ -201,7 +227,7 @@
 	{/if}
 
 	{#if step.link}
-		<InstallStepLink link={step.link} {deviceId} />
+		<InstallStepLink link={step.link} {deviceId} {handover} />
 	{/if}
 
 	{#if noteKey}
@@ -216,6 +242,7 @@
 				{deviceId}
 				kind={actionKind}
 				{getLink}
+				{handover}
 				{showCopy}
 				onPending={onActionPending}
 			/>
@@ -224,9 +251,32 @@
 		<!-- A finished step can still be redone: a phone reset or reinstalled since,
 		     or a profile removed. The QR is only fetched when asked for. -->
 		<ControlButton color="azure" onclick={() => (again = true)}>
-			<QrCode size={16} aria-hidden="true" />
+			{#if handover === 'button'}
+				<RotateCw size={16} aria-hidden="true" />
+			{:else}
+				<QrCode size={16} aria-hidden="true" />
+			{/if}
 			{$t(AGAIN_KEYS[actionKind])}
 		</ControlButton>
+	{/if}
+
+	{#if showFilterSwitch}
+		<div class="space-y-3">
+			<div class="flex justify-center">
+				<ControlButton
+					color="azure"
+					loading={switchingOn}
+					loadingLabel={$t('DeviceInstall.filter_on_working')}
+					onclick={switchFilterOn}
+				>
+					<Power size={16} aria-hidden="true" />
+					{$t('DeviceInstall.filter_on_button')}
+				</ControlButton>
+			</div>
+			{#if filterFailed}
+				<Callout color="red"><p>{$t('DeviceInstall.filter_on_error')}</p></Callout>
+			{/if}
+		</div>
 	{/if}
 
 	{#if step.troubleshootKey && !done}

@@ -1,4 +1,4 @@
-// The iOS install walkthrough's logic, shared by the customer and technician
+// The iOS install walkthrough's logic, shared by the customer, technician and device
 // portals. The component is `InstallWalkthrough` in `@mbsmart/ui/organisms`.
 export * from './links.js';
 export * from './linkRenewal.js';
