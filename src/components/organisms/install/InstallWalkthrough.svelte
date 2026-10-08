@@ -62,6 +62,8 @@
 	 * @prop {import('../../../utils/install/links.js').InstallHandover} [handover]
 	 *   `auto` (the technician), `both` (the customer portal) or `button` (the
 	 *   device portal); see `links.js`.
+	 * @prop {boolean} [supervised] The device is already supervised (the device
+	 *   portal): no supervise step, and no adult prerequisites.
 	 */
 	import { onMount, tick } from 'svelte';
 	import { BadgeCheck, Check, ChevronLeft, ChevronRight } from '@lucide/svelte';
@@ -90,7 +92,8 @@
 		showCopy = false,
 		framed = true,
 		audience = 'customer',
-		handover = 'auto'
+		handover = 'auto',
+		supervised = false
 	} = $props();
 
 	const FAST_POLL_MS = 5_000;
@@ -129,7 +132,7 @@
 		}
 	});
 
-	const stepOptions = $derived({ handover, filterHere: !!api.turnFilterOn });
+	const stepOptions = $derived({ handover, filterHere: !!api.turnFilterOn, supervised });
 	const steps = $derived(installStepsFor(deviceType, accountKind, audience, stepOptions));
 	const evidence = $derived({ status, profile, now: readAt });
 

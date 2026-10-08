@@ -2194,7 +2194,9 @@ button that opens them in place, or both:
 The lines that say to scan the code change with it (`step_link_1_both`,
 `step_link_1_button` and so on). Where `api.turnFilterOn` is given, the last
 step offers **Turn on the filter** instead of the way to the device portal and
-its PIN; the device still confirms the step.
+its PIN; the device still confirms the step. `supervised` is for a device
+that is supervised already (the device portal's are): the adult path then starts
+at the app, without the prerequisites and the supervise step.
 
 ```svelte
 <script>
@@ -2224,6 +2226,7 @@ its PIN; the device still confirms the step.
 | `audience` | `'customer' | 'technician'` | `'customer'` | `technician` drops the lines about MB Smart support, the time it takes and the device portal, and says to turn the filter on with **Enable protection** |
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
 | `handover` | `'auto' | 'both' | 'button'` | `'auto'` | How a link reaches the phone; see above |
+| `supervised` | `boolean` | `false` | The device is supervised already: no prerequisites or supervise step on the adult path |
 
 ---
 
@@ -3294,7 +3297,7 @@ prerendered pages. Used by the customer portal's marketing pages and every OAuth
 `@mbsmart/ui/install`: the walkthrough's logic, for a host that needs a piece of it
 without the component.
 
-- `installStepsFor(deviceType, accountKind, audience, { handover, filterHere })` and `hasInstallSteps(deviceType)`.
+- `installStepsFor(deviceType, accountKind, audience, { handover, filterHere, supervised })` and `hasInstallSteps(deviceType)`.
   The order is link first and profile last: every device redeems an enrolment code
   straight after the app is installed, so the portal hears from it for the rest of
   the setup; an adult device installs its profile last.

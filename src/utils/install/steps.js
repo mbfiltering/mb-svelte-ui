@@ -516,10 +516,22 @@ function filterHereStep(step) {
 }
 
 /**
+ * What an already supervised device skips. The adult's prerequisites go with
+ * the supervise step: what they ask for is MB Smart support, for supervising.
+ *
+ * @type {Record<string, string[]>}
+ */
+const SUPERVISION_STEP_IDS = { adult: ['prerequisites', 'supervise'] };
+
+/**
  * @typedef {object} InstallStepOptions
  * @property {import('./links.js').InstallHandover} [handover] How links reach
  *   the phone, which decides whether a line says to scan or to tap.
  * @property {boolean} [filterHere] The portal can turn the filter on itself.
+ * @property {boolean} [supervised] The device is already supervised: the device
+ *   portal, whose devices were supervised when version 1 was set up (MHomsany,
+ *   2026-10-08). Drops the supervise step and the adult's prerequisites, which
+ *   are only there for it.
  */
 
 /**
@@ -538,6 +550,10 @@ export function installStepsFor(deviceType, accountKind, audience = 'customer', 
 	let steps = forAudience(deviceType, accountKind, audience);
 	if (lines) steps = steps.map((step) => withLines(step, lines));
 	if (options.filterHere) steps = steps.map(filterHereStep);
+	if (options.supervised) {
+		const skip = SUPERVISION_STEP_IDS[accountKind ?? ''] ?? [];
+		steps = steps.filter((step) => !skip.includes(step.id));
+	}
 	return steps;
 }
 
