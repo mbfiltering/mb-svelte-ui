@@ -21,8 +21,13 @@
  *   adult: setup_kind, prerequisites, supervise, install_app, link_device,
  *          extension, app_setup, profile, trust, filter_on
  *
- * The technician's adult list has no prerequisites: all that was left of it was
- * the iCloud backup, which the supervise step says anyway (the owner, 2026-10-07).
+ * The technician's adult list has no prerequisites: what is left of it is MB
+ * Smart support, which the technician is, and the time (the owner, 2026-10-07).
+ *
+ * **No backup, no erase.** Supervision used to erase the device, so the adult path
+ * began with an iCloud backup and ended supervision with a restore. MB Smart's
+ * installer supervises without erasing since October 2026, so both are gone
+ * (MHomsany, 2026-10-08).
  *
  * **How a step is confirmed.** `confirm: 'auto'`: only by the device. The step
  * shows "waiting for the device" and has no button. `confirm: 'attest'`: by
@@ -80,7 +85,7 @@
  * @property {string} titleKey
  * @property {string} [bodyKey] Only where it changes what the reader does.
  * @property {string[]} [instructionKeys] Absent where they depend on the answer.
- * @property {string[]} [warnKeys] Lines drawn red: a trap or an erase.
+ * @property {string[]} [warnKeys] Lines drawn red: a trap.
  * @property {string} [noteKey] An aside to decide on, not a thing to do.
  * @property {string} [checkpointKey] What the app should now read.
  * @property {string} [troubleshootKey] A named symptom, under the action.
@@ -203,22 +208,20 @@ const PREREQUISITES_STEP = {
 				...ACCOUNT_LABELS.adult,
 				instructionKeys: [
 					'DeviceInstall.step_prereq_adult_1',
-					'DeviceInstall.step_prereq_adult_2',
-					'DeviceInstall.step_prereq_adult_3'
+					'DeviceInstall.step_prereq_adult_2'
 				],
 				noteKey: 'DeviceInstall.step_prereq_adult_note'
 			}
 		}
 	},
-	warnKeys: ['DeviceInstall.step_prereq_adult_2'],
 	confirmLabelKey: 'DeviceInstall.step_prereq_confirm',
 	confirm: 'attest'
 };
 
 /**
- * Adult only, and before anything is installed: supervising erases the device.
- * Done by MB Smart support with a Mac tool customers cannot get. Nothing reports
- * supervision, so it is the person's word.
+ * Adult only, and before anything is installed. Done by MB Smart support with a
+ * Mac tool customers cannot get. Nothing reports supervision, so it is the
+ * person's word.
  *
  * @type {InstallStep}
  */
@@ -226,12 +229,7 @@ const SUPERVISE_STEP = {
 	id: 'supervise',
 	titleKey: 'DeviceInstall.step_supervise_title',
 	bodyKey: 'DeviceInstall.step_supervise_body',
-	instructionKeys: [
-		'DeviceInstall.step_supervise_1',
-		'DeviceInstall.step_supervise_2',
-		'DeviceInstall.step_supervise_3'
-	],
-	warnKeys: ['DeviceInstall.step_supervise_1'],
+	instructionKeys: ['DeviceInstall.step_supervise_1', 'DeviceInstall.step_supervise_2'],
 	noteKey: 'DeviceInstall.step_supervise_note',
 	confirm: 'attest'
 };
@@ -425,8 +423,8 @@ const forTechnician = (/** @type {string[]} */ keys, /** @type {string[]} */ dro
  */
 const TECHNICIAN_LINES = /** @type {Record<string, string>} */ ({
 	'DeviceInstall.step_supervise_body': 'DeviceInstall.step_supervise_body_tech',
+	'DeviceInstall.step_supervise_1': 'DeviceInstall.step_supervise_1_tech',
 	'DeviceInstall.step_supervise_2': 'DeviceInstall.step_supervise_2_tech',
-	'DeviceInstall.step_supervise_3': 'DeviceInstall.step_supervise_3_tech',
 	'DeviceInstall.step_filter_on_1': 'DeviceInstall.step_filter_on_1_tech'
 });
 
