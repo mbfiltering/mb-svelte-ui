@@ -4,8 +4,9 @@
 
 	/**
 	 * A Modal holding one Island: the shape almost every dialog in the portals
-	 * takes. The island's header (and `footer`, when given) stay put while only
-	 * the content scrolls, with a fade at whichever edge has more to see.
+	 * takes. The island's header (the title bar, or a `header` snippet in its
+	 * place) and `footer`, when given, stay put while only the content scrolls,
+	 * with a fade at whichever edge has more to see.
 	 *
 	 * Deliberately thin. Every other prop goes straight to Modal (`isOpen`,
 	 * `onClose`, `minimizable`, `verticalAlign`, the labels, ...). A dialog that
@@ -16,6 +17,7 @@
 		icon = null,
 		svgIcon = '',
 		ariaLabel = '', // Falls back to `title`
+		header = undefined,
 		footer = undefined,
 		children = undefined,
 		...modalProps
@@ -27,6 +29,7 @@
 		{title}
 		{icon}
 		{svgIcon}
+		{header}
 		{footer}
 		collapsible={false}
 		scrollBody

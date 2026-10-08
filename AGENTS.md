@@ -363,7 +363,7 @@ whichever edge has more.
 - **A single-island dialog uses `ModalIsland`.** `Modal` + `Island` by hand is for the
   dialogs that are genuinely something else: two islands, content beside the island,
   the `SectionedPage` overflow sheet.
-- **Keep it thin.** Island props it owns (`title`, `icon`, `svgIcon`, `footer`), and
+- **Keep it thin.** Island props it owns (`title`, `icon`, `svgIcon`, `header`, `footer`), and
   everything else passes through to `Modal`. When a dialog needs more, it does not
   fit the shape; use the primitives rather than adding a prop.
 - **The height chain is the mechanism.** `Modal innerScroll` makes the dialog a

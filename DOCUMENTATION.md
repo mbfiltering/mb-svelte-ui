@@ -1736,6 +1736,7 @@ Collapsible card container with optional title and icon.
 | `expandLabel`     | `string`    | `'Expand'`   | Header tooltip when collapsed |
 | `className`       | `string`    | `''`    | Additional classes               |
 | `scrollBody`      | `boolean`   | `false` | Header and footer stay put and only the content scrolls, with edge fades. Needs a height-bounded flex column parent; use `ModalIsland` rather than setting it by hand |
+| `header`          | `snippet`   | -       | Pinned above the content in place of the title bar (no title, no toggle), such as a search field. Wins over `title`. With no `children` the header is the whole island, with no empty panel under it |
 | `footer`          | `snippet`   | -       | Pinned under the content, for the island's actions |
 | `children`        | `snippet`   | -       | Island content                   |
 
@@ -2380,6 +2381,7 @@ dialog** instead of spelling `Modal` + `Island` by hand.
 | `icon`      | `component` | `null`  | Lucide icon for the title |
 | `svgIcon`   | `string`    | `''`    | SVG icon name, instead of `icon` |
 | `ariaLabel` | `string`    | `''`    | Dialog name; falls back to `title`. Pass it when there is no title |
+| `header`    | `snippet`   | -       | Pinned above the scrolling content instead of the title bar, such as the device search field. Pass `ariaLabel` with it. Pass `children={undefined}` while there is nothing to show and the header stands alone |
 | `footer`    | `snippet`   | -       | Actions pinned under the scrolling content |
 | `children`  | `snippet`   | -       | Island content |
 | *anything else* |         |         | Passed to `Modal` unchanged: `isOpen`, `onClose`, `minimizable`, `verticalAlign`, `showCloseButton`, the labels |

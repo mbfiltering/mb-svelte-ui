@@ -14,6 +14,7 @@
 		collapseLabel = 'Collapse', // Tooltip text when expanded
 		expandLabel = 'Expand', // Tooltip text when collapsed
 		scrollBody = false, // Header and footer stay put; only the content scrolls. Needs a height-bounded flex parent (ModalIsland)
+		header = undefined, // Snippet pinned above the content in place of the title bar, such as a search field. Wins over `title`
 		footer = undefined, // Snippet pinned under the content, for the island's actions
 		children = undefined
 	} = $props();
@@ -72,7 +73,15 @@
 		? 'flex min-h-0 flex-col'
 		: ''} {className} rounded-xl text-gray-900 dark:border dark:border-zinc-750 dark:text-gray-50"
 >
-	{#if title && collapsible && !forceExpanded}
+	{#if header}
+		<!-- Custom header: no title, no toggle. The phone top padding clears the
+		     bottom sheet's drag handle (h-8), as the empty strip below does. With
+		     no content yet (a search before anything is typed) it is the whole
+		     island, so it closes itself off rather than leaving an empty panel. -->
+		<div class="shrink-0 px-3 pt-8 sm:px-6 sm:pt-6 {children ? '' : 'pb-3 sm:pb-6'}">
+			{@render header()}
+		</div>
+	{:else if title && collapsible && !forceExpanded}
 		<!-- Header with collapse functionality -->
 		<button
 			class="flex w-full shrink-0 cursor-pointer items-center justify-between text-gray-700 hover:text-azure-700 dark:text-gray-200 dark:hover:text-azure-500 {isExpanded
@@ -124,7 +133,9 @@
 		<div class="h-8 shrink-0 sm:hidden" aria-hidden="true"></div>
 	{/if}
 	<!-- No header, just content -->
-	{#if scrollBody}
+	{#if header && !children}
+		<!-- Nothing under the custom header yet -->
+	{:else if scrollBody}
 		<div
 			id={panelId}
 			bind:this={scrollEl}
