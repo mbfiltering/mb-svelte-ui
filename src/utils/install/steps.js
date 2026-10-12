@@ -11,18 +11,24 @@
  * **The order, since October 2026: link first, profile last.** "The profile or
  * the enrollment actually link MB Smart to the device. So enrollment should be at
  * the beginning of the flow, profile should be at the end, and we still get
- * everything in between in sync" (MHomsany). So every device, adult or child,
- * redeems an enrolment code straight after the app is installed, and from that
- * moment the app's heartbeat reaches MB Smart and the portal can watch the steps
- * that follow. An adult device installs its configuration profile last.
+ * everything in between in sync" (MHomsany). So every device redeems an
+ * enrolment code straight after the app is installed, and from that moment the
+ * app's heartbeat reaches MB Smart and the portal can watch the steps that
+ * follow. The configuration profile is installed last.
  *
- *   child: setup_kind, prerequisites, install_app, link_device, extension,
- *          app_setup, filter_on
- *   adult: setup_kind, prerequisites, supervise, install_app, link_device,
- *          extension, app_setup, profile, trust, filter_on
+ * **One path, and Screen Time is optional** (the owner, 2026-10-12). There is no
+ * Adult or Child question up front: every device is supervised and gets the
+ * profile, even though a child account could do without, because supervising
+ * anyway is the safer default. Supervision is the first line of the app step,
+ * not a page of its own. The link step asks whether to use Screen Time, off by
+ * default; only then does the Screen Time step appear, and that is where the
+ * Adult or Child question is asked.
  *
- * The technician's adult list has no prerequisites: what is left of it is MB
- * Smart support, which the technician is, and the time (the owner, 2026-10-07).
+ *   prerequisites, install_app, link_device, [screen_time], extension, profile,
+ *   trust, filter_on
+ *
+ * The technician's list has no prerequisites: they are MB Smart support, which
+ * the technician is, and the time (the owner, 2026-10-07).
  *
  * **No backup, no erase.** Supervision used to erase the device, so the adult path
  * began with an iCloud backup and ended supervision with a restore. MB Smart's
@@ -69,9 +75,8 @@
  * @property {string} [checkpointKey] Instead of the step's.
  *
  * @typedef {object} InstallQuestion "Which kind of Apple Account?" Only
- *   `setup_kind` asks it; the steps that depend on the answer just show its lines.
+ *   `screen_time` asks it, and its lines depend on the answer.
  * @property {string} labelKey
- * @property {boolean} asks
  * @property {Record<InstallAccountKind, InstallAccountOption>} options
  *
  * @typedef {object} InstallStepEvidence What a step may read to prove itself.
@@ -100,6 +105,8 @@
  * @property {(evidence: InstallStepEvidence) => boolean} [isDone]
  * @property {boolean} [filterSwitch] The step offers a button that turns the
  *   filter on from here; see `installStepsFor`'s `filterHere`.
+ * @property {boolean} [screenTimeChoice] The step asks whether to use Screen
+ *   Time, which adds or removes the `screen_time` step.
  */
 
 import { APP_STORE_URL, DEVICE_PORTAL_URL } from './links.js';
@@ -170,77 +177,34 @@ const ACCOUNT_LABELS = {
 	adult: { labelKey: 'DeviceInstall.account_adult_label' }
 };
 
-/** @type {InstallStep} */
-const SETUP_KIND_STEP = {
-	id: 'setup_kind',
-	// The heading is the question, by the same key, so the two cannot disagree.
-	titleKey: 'DeviceInstall.account_question',
-	bodyKey: 'DeviceInstall.step_setup_kind_body',
-	question: {
-		labelKey: 'DeviceInstall.account_question',
-		asks: true,
-		options: {
-			child: { ...ACCOUNT_LABELS.child, instructionKeys: [] },
-			adult: { ...ACCOUNT_LABELS.adult, instructionKeys: [] }
-		}
-	},
-	confirmLabelKey: 'DeviceInstall.continue',
-	confirm: 'attest'
-};
-
-/** @type {InstallStep} */
+/**
+ * MB Smart support, and the time. Supervision needs a tool only support has.
+ *
+ * @type {InstallStep}
+ */
 const PREREQUISITES_STEP = {
 	id: 'prerequisites',
 	titleKey: 'DeviceInstall.step_prereq_title',
-	question: {
-		labelKey: 'DeviceInstall.account_question',
-		asks: false,
-		options: {
-			child: {
-				...ACCOUNT_LABELS.child,
-				instructionKeys: [
-					'DeviceInstall.step_prereq_child_1',
-					'DeviceInstall.step_prereq_child_3'
-				]
-			},
-			adult: {
-				...ACCOUNT_LABELS.adult,
-				instructionKeys: [
-					'DeviceInstall.step_prereq_adult_1',
-					'DeviceInstall.step_prereq_adult_2'
-				],
-				noteKey: 'DeviceInstall.step_prereq_adult_note'
-			}
-		}
-	},
+	instructionKeys: ['DeviceInstall.step_prereq_1', 'DeviceInstall.step_prereq_2'],
+	noteKey: 'DeviceInstall.step_prereq_note',
 	confirmLabelKey: 'DeviceInstall.step_prereq_confirm',
 	confirm: 'attest'
 };
 
+/** The supervise line, which an already supervised device leaves out. */
+const SUPERVISE_LINE = 'DeviceInstall.step_install_app_supervise';
+
 /**
- * Adult only, and before anything is installed. Done by MB Smart support with a
- * Mac tool customers cannot get. Nothing reports supervision, so it is the
- * person's word.
+ * Supervision, then the app. Supervision is done with the MB Smart installer, a
+ * Mac tool customers cannot get, before anything is installed. Nothing reports
+ * it, so it rides on this step's tick.
  *
  * @type {InstallStep}
  */
-const SUPERVISE_STEP = {
-	id: 'supervise',
-	titleKey: 'DeviceInstall.step_supervise_title',
-	bodyKey: 'DeviceInstall.step_supervise_body',
-	instructionKeys: ['DeviceInstall.step_supervise_1', 'DeviceInstall.step_supervise_2'],
-	noteKey: 'DeviceInstall.step_supervise_note',
-	confirm: 'attest'
-};
-
-/** @type {InstallStep} */
 const INSTALL_APP_STEP = {
 	id: 'install_app',
 	titleKey: 'DeviceInstall.step_install_app_title',
-	instructionKeys: [
-		'DeviceInstall.step_install_app_1',
-		'DeviceInstall.step_install_app_2'
-	],
+	instructionKeys: [SUPERVISE_LINE, 'DeviceInstall.step_install_app_store'],
 	link: {
 		url: APP_STORE_URL,
 		labelKey: 'DeviceInstall.app_store_open',
@@ -255,7 +219,7 @@ const INSTALL_APP_STEP = {
 };
 
 /**
- * The first contact with the phone, on both paths.
+ * The first contact with the phone.
  *
  * The QR carries an `mbsmart://redeem` code; the app redeems it, even before its
  * own onboarding (app team, 2026-10-05), and sends its first heartbeat, which
@@ -263,17 +227,18 @@ const INSTALL_APP_STEP = {
  * it cannot mean anything but "linked". The step watches for a recent one and says
  * so.
  *
+ * It also asks whether to use Screen Time (`screenTimeChoice`), off by default.
+ * Off, the reader skips the app's own "how should this device be set up"
+ * question (`step_link_3`, under the box); on, the Screen Time step answers it.
+ *
  * @type {InstallStep}
  */
 const LINK_STEP = {
 	id: 'link_device',
 	titleKey: 'DeviceInstall.step_link_title',
 	bodyKey: 'DeviceInstall.step_link_body',
-	instructionKeys: [
-		'DeviceInstall.step_link_1',
-		'DeviceInstall.step_link_2',
-		'DeviceInstall.step_link_3'
-	],
+	instructionKeys: ['DeviceInstall.step_link_1', 'DeviceInstall.step_link_2'],
+	screenTimeChoice: true,
 	action: 'enroll',
 	checkpointKey: 'DeviceInstall.step_link_checkpoint',
 	troubleshootKey: 'DeviceInstall.link_troubleshoot',
@@ -284,10 +249,48 @@ const LINK_STEP = {
 };
 
 /**
- * The Safari extensions, in Settings. Before the app's Screen Time prompt: a
- * restricted device greys the switches out. Nothing reports the All Websites permission, and the
- * extension's own stamp would tick this with All Websites left on Ask, which is
- * the case the step exists to catch, so it stays the person's word.
+ * Optional, straight after the link, and only when its box is ticked: the
+ * app's child/adult fork and Apple's Screen Time approval. iOS puts "Don't
+ * Allow" in the blue button, hence the red lines. The `Mode` checkpoint is the one
+ * place a mismatched answer ever shows. Nothing reports Screen Time, so it is the
+ * person's word.
+ *
+ * @type {InstallStep}
+ */
+const SCREEN_TIME_STEP = {
+	id: 'screen_time',
+	titleKey: 'DeviceInstall.step_screen_time_title',
+	question: {
+		labelKey: 'DeviceInstall.account_question',
+		options: {
+			child: {
+				...ACCOUNT_LABELS.child,
+				instructionKeys: [
+					'DeviceInstall.step_screen_time_child_1',
+					'DeviceInstall.step_screen_time_child_2',
+					'DeviceInstall.step_screen_time_child_3'
+				]
+			},
+			adult: {
+				...ACCOUNT_LABELS.adult,
+				instructionKeys: [
+					'DeviceInstall.step_screen_time_adult_1',
+					'DeviceInstall.step_screen_time_adult_2'
+				]
+			}
+		}
+	},
+	warnKeys: ['DeviceInstall.step_screen_time_child_2', 'DeviceInstall.step_screen_time_adult_2'],
+	checkpointKey: 'DeviceInstall.step_screen_time_checkpoint',
+	confirmLabelKey: 'DeviceInstall.confirm_seen',
+	confirm: 'attest'
+};
+
+/**
+ * The Safari extensions, in Settings. Nothing reports the All Websites
+ * permission, and the extension's own stamp would tick this with All Websites
+ * left on Ask, which is the case the step exists to catch, so it stays the
+ * person's word.
  *
  * @type {InstallStep}
  */
@@ -303,46 +306,8 @@ const EXTENSION_STEP = {
 };
 
 /**
- * The app's child/adult fork. The `Mode` checkpoint is the one place a
- * mismatched answer ever shows.
- *
- * Screen Time is optional (the owner, 2026-10-12), so it is a note, not a line
- * to follow: iOS asks for it straight after the fork, and the note says how to
- * skip it or turn it on. The parent's password is only needed to turn it on, so
- * the child's prerequisites no longer ask for it.
- *
- * @type {InstallStep}
- */
-const APP_SETUP_STEP = {
-	id: 'app_setup',
-	titleKey: 'DeviceInstall.step_app_setup_title',
-	question: {
-		labelKey: 'DeviceInstall.account_question',
-		asks: false,
-		options: {
-			child: {
-				...ACCOUNT_LABELS.child,
-				instructionKeys: ['DeviceInstall.step_app_setup_child_1'],
-				noteKey: 'DeviceInstall.step_app_setup_child_note'
-			},
-			adult: {
-				...ACCOUNT_LABELS.adult,
-				instructionKeys: ['DeviceInstall.step_app_setup_adult_1'],
-				noteKey: 'DeviceInstall.step_app_setup_adult_note'
-			}
-		}
-	},
-	checkpointKey: 'DeviceInstall.step_app_setup_checkpoint',
-	confirmLabelKey: 'DeviceInstall.confirm_seen',
-	confirm: 'attest'
-};
-
-/**
- * Adult only, and last. The configuration profile is what holds MB Smart on a
- * device with no parent to approve Screen Time.
- *
- * `profile` evidence is asked for only on the adult path; a child device never
- * installs one and would read `installed: false` for ever.
+ * Every device, last. The configuration profile is what holds MB Smart on the
+ * device; Screen Time, where it is used, comes on top.
  *
  * @type {InstallStep}
  */
@@ -359,7 +324,7 @@ const PROFILE_STEP = {
 };
 
 /**
- * Adult only, right after the profile, which is what brings the MB Smart root
+ * Right after the profile, which is what brings the MB Smart root
  * certificate (MHomsany, 2026-10-07: it comes with the profile, not the app). A
  * root certificate that arrives in a profile is not trusted for SSL until it is
  * turned on under Certificate Trust Settings (support.apple.com/102390). Nothing
@@ -413,22 +378,16 @@ const forTechnician = (/** @type {string[]} */ keys, /** @type {string[]} */ dro
 
 /**
  * Lines the technician reads differently. The customer's copy sends them to MB
- * Smart support, to the device portal and through an hour's warning; the
- * technician is that support, turns the filter on from the page behind the popup,
- * and knows how long it takes (the owner, 2026-10-06).
+ * Smart support and to the device portal; the technician is that support, and
+ * turns the filter on from the page behind the popup (the owner, 2026-10-06).
  */
 const TECHNICIAN_LINES = /** @type {Record<string, string>} */ ({
-	'DeviceInstall.step_supervise_body': 'DeviceInstall.step_supervise_body_tech',
-	'DeviceInstall.step_supervise_1': 'DeviceInstall.step_supervise_1_tech',
-	'DeviceInstall.step_supervise_2': 'DeviceInstall.step_supervise_2_tech',
+	[SUPERVISE_LINE]: 'DeviceInstall.step_install_app_supervise_tech',
 	'DeviceInstall.step_filter_on_1': 'DeviceInstall.step_filter_on_1_tech'
 });
 
-/** What the technician does not need: the time, the device portal PIN. */
-const TECHNICIAN_DROPS = [
-	'DeviceInstall.step_prereq_child_3',
-	PIN_LINE.key
-];
+/** What the technician does not need: the device portal PIN. */
+const TECHNICIAN_DROPS = [PIN_LINE.key];
 
 /**
  * @param {InstallStep} step
@@ -437,26 +396,12 @@ const TECHNICIAN_DROPS = [
 function technicianStep(step) {
 	const next = { ...step };
 	if (step.instructionKeys) next.instructionKeys = forTechnician(step.instructionKeys, TECHNICIAN_DROPS);
-	if (step.bodyKey) next.bodyKey = TECHNICIAN_LINES[step.bodyKey] ?? step.bodyKey;
-	if (step.question) {
-		const options = /** @type {Record<InstallAccountKind, InstallAccountOption>} */ ({});
-		for (const [kind, option] of Object.entries(step.question.options)) {
-			// The prerequisites' notes send the reader to MB Smart support.
-			const rest = { ...option };
-			if (step.id === 'prerequisites') delete rest.noteKey;
-			options[/** @type {InstallAccountKind} */ (kind)] = {
-				...rest,
-				instructionKeys: forTechnician(option.instructionKeys, TECHNICIAN_DROPS)
-			};
-		}
-		next.question = { ...step.question, options };
+	// The filter note was about the device portal. The filter is turned on from
+	// the technician portal, so the device portal button goes too.
+	if (step.id === 'filter_on') {
+		delete next.noteKey;
+		delete next.link;
 	}
-	// The supervise note only said "contact support", and the filter note was
-	// about the device portal. The filter is turned on from the technician
-	// portal, so the device portal button goes too.
-	if (step.id === 'supervise' || step.id === 'filter_on') delete next.noteKey;
-	else if (step.noteKey) next.noteKey = TECHNICIAN_LINES[step.noteKey] ?? step.noteKey;
-	if (step.id === 'filter_on') delete next.link;
 	return next;
 }
 
@@ -514,12 +459,21 @@ function filterHereStep(step) {
 }
 
 /**
- * What an already supervised device skips. The adult's prerequisites go with
- * the supervise step: what they ask for is MB Smart support, for supervising.
+ * An already supervised device: no supervise line, and no prerequisites, which
+ * are only there for supervising.
  *
- * @type {Record<string, string[]>}
+ * @param {InstallStep[]} steps
+ * @returns {InstallStep[]}
  */
-const SUPERVISION_STEP_IDS = { adult: ['prerequisites', 'supervise'] };
+function withoutSupervision(steps) {
+	return steps
+		.filter((step) => step.id !== 'prerequisites')
+		.map((step) =>
+			step.instructionKeys?.includes(SUPERVISE_LINE)
+				? { ...step, instructionKeys: step.instructionKeys.filter((key) => key !== SUPERVISE_LINE) }
+				: step
+		);
+}
 
 /**
  * @typedef {object} InstallStepOptions
@@ -528,49 +482,46 @@ const SUPERVISION_STEP_IDS = { adult: ['prerequisites', 'supervise'] };
  * @property {boolean} [filterHere] The portal can turn the filter on itself.
  * @property {boolean} [supervised] The device is already supervised: the device
  *   portal, whose devices were supervised when version 1 was set up (MHomsany,
- *   2026-10-08). Drops the supervise step and the adult's prerequisites, which
- *   are only there for it.
+ *   2026-10-08). Drops the supervise line and the prerequisites.
+ * @property {boolean} [screenTime] The reader ticked "Use Screen Time" on the
+ *   link step, which adds the Screen Time step after it.
  */
 
 /**
- * The procedure for a device, or an empty list where there is none. An
- * unanswered question gets the shorter (child-shaped) list; answering adult
- * inserts supervision and the profile.
+ * The procedure for a device, or an empty list where there is none.
  *
  * @param {string | undefined | null} deviceType
- * @param {InstallAccountKind | null} [accountKind]
  * @param {InstallAudience} [audience]
  * @param {InstallStepOptions} [options]
  * @returns {InstallStep[]}
  */
-export function installStepsFor(deviceType, accountKind, audience = 'customer', options = {}) {
+export function installStepsFor(deviceType, audience = 'customer', options = {}) {
 	const lines = HANDOVER_LINES[options.handover ?? 'auto'];
-	let steps = forAudience(deviceType, accountKind, audience);
+	let steps = forAudience(deviceType, audience, !!options.screenTime);
 	if (lines) steps = steps.map((step) => withLines(step, lines));
 	if (options.filterHere) steps = steps.map(filterHereStep);
-	if (options.supervised) {
-		const skip = SUPERVISION_STEP_IDS[accountKind ?? ''] ?? [];
-		steps = steps.filter((step) => !skip.includes(step.id));
-	}
+	if (options.supervised) steps = withoutSupervision(steps);
 	return steps;
 }
 
 /**
  * @param {string | undefined | null} deviceType
- * @param {InstallAccountKind | null | undefined} accountKind
  * @param {InstallAudience} audience
+ * @param {boolean} screenTime
  * @returns {InstallStep[]}
  */
-function forAudience(deviceType, accountKind, audience) {
+function forAudience(deviceType, audience, screenTime) {
 	if (!hasInstallSteps(deviceType)) return [];
-	const head = [SETUP_KIND_STEP, PREREQUISITES_STEP];
-	const middle = [INSTALL_APP_STEP, LINK_STEP, EXTENSION_STEP, APP_SETUP_STEP];
-	const steps =
-		accountKind === 'adult'
-			? [...head, SUPERVISE_STEP, ...middle, PROFILE_STEP, TRUST_STEP, FILTER_ON_STEP]
-			: [...head, ...middle, FILTER_ON_STEP];
+	const steps = [
+		PREREQUISITES_STEP,
+		INSTALL_APP_STEP,
+		LINK_STEP,
+		...(screenTime ? [SCREEN_TIME_STEP] : []),
+		EXTENSION_STEP,
+		PROFILE_STEP,
+		TRUST_STEP,
+		FILTER_ON_STEP
+	];
 	if (audience !== 'technician') return steps;
-	return steps
-		.filter((step) => !(accountKind === 'adult' && step.id === 'prerequisites'))
-		.map(technicianStep);
+	return steps.filter((step) => step.id !== 'prerequisites').map(technicianStep);
 }

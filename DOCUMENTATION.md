@@ -2162,7 +2162,7 @@ Complex components with significant functionality.
 The iOS v2 install walkthrough, one step at a time: a progress bar whose phrase is
 a heading and whose track carries a numbered circle per step (filled when done,
 ringed when on screen, each a button to that step; the list, and so the circles,
-follow the adult or child answer), the step on screen, and a control row (Previous, a done mark, "I've done
+follow the Screen Time choice; the ring takes the step's own colour), the step on screen, and a control row (Previous, a done mark, "I've done
 this" or Next). **One component for three portals**: the customer portal renders it
 as its `/install` page, the technician portal in the "iOS v2 setup" popup, and the
 device portal as its `/install` page, on the phone being set up. The
@@ -2172,15 +2172,18 @@ locale files and loads itself (see [install](#install)).
 
 It **watches the device itself**: `api.getStatus()` on arrival and on a clock,
 5 s while the step on screen waits on the device and 15 s otherwise, never behind
-a hidden tab, and not at all once every step is done; on the adult path also
+a hidden tab, and not at all once every step is done; also
 `api.getProfileStatus()` until the profile is in. A step the device proves (the
 link, the profile, the filter) waits for it and has no button; the rest are ticked
-by hand. Ticks and the adult or child answer last as long as the component is
+by hand. Ticks, the Screen Time choice and the adult or child answer last as long as the component is
 mounted; nothing is written to the browser.
 A finished link or profile step draws no QR, but offers "Link it again" or
 "Download the profile again", which asks `api.getLink()` for a fresh one.
-On the adult path the profile is followed by a step to trust the MB Smart
-certificate it brings, ticked by hand: nothing reports that switch.
+There is one path for every device: supervision is the first line of the app
+step, and the profile, last, is followed by a step to trust the MB Smart
+certificate it brings, ticked by hand: nothing reports that switch. Screen Time
+is optional: a box on the link step, off by default, adds a Screen Time step
+after it, which is where the adult or child question is asked.
 
 **How a link reaches the phone** (`handover`) depends on where the portal is read.
 The App Store link and the link and profile credentials are drawn as a QR code, a
@@ -2196,8 +2199,8 @@ The lines that say to scan the code change with it (`step_link_1_both`,
 `step_link_1_button` and so on). Where `api.turnFilterOn` is given, the last
 step offers **Turn on the filter** instead of the way to the device portal and
 its PIN; the device still confirms the step. `supervised` is for a device
-that is supervised already (the device portal's are): the adult path then starts
-at the app, without the prerequisites and the supervise step.
+that is supervised already (the device portal's are): no prerequisites, and no
+supervise line on the app step.
 
 ```svelte
 <script>
@@ -2227,7 +2230,7 @@ at the app, without the prerequisites and the supervise step.
 | `audience` | `'customer' | 'technician'` | `'customer'` | `technician` drops the lines about MB Smart support, the time it takes and the device portal, and says to turn the filter on with **Enable protection** |
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
 | `handover` | `'auto' | 'both' | 'button'` | `'auto'` | How a link reaches the phone; see above |
-| `supervised` | `boolean` | `false` | The device is supervised already: no prerequisites or supervise step on the adult path |
+| `supervised` | `boolean` | `false` | The device is supervised already: no prerequisites or supervise line |
 
 ---
 
@@ -3298,10 +3301,10 @@ prerendered pages. Used by the customer portal's marketing pages and every OAuth
 `@mbsmart/ui/install`: the walkthrough's logic, for a host that needs a piece of it
 without the component.
 
-- `installStepsFor(deviceType, accountKind, audience, { handover, filterHere, supervised })` and `hasInstallSteps(deviceType)`.
+- `installStepsFor(deviceType, audience, { handover, filterHere, supervised, screenTime })` and `hasInstallSteps(deviceType)`.
   The order is link first and profile last: every device redeems an enrolment code
   straight after the app is installed, so the portal hears from it for the rest of
-  the setup; an adult device installs its profile last.
+  the setup; every device installs its profile last.
 - `installProgressPhraseKey(completed, total)`: the bar's phrase.
 - `hasStamp(value)`: does an API timestamp name a real moment (not the 1970 epoch).
 - `isRecentStamp(value, now?)`: is it also less than `RECENT_MS` (20 minutes) old?

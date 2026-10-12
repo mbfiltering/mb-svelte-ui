@@ -6,11 +6,13 @@
 	 * waiting for the device. Previous, Next, "I've done this" and the device's
 	 * own confirmation are the walkthrough's control row, not this panel's.
 	 *
-	 * **Only `setup_kind` asks the child or adult question.** Steps that depend on
-	 * the answer just show its lines (the owner, 2026-10-07: no "You said this
-	 * device is on…"); the answer is changed on the first step, which the bar's
-	 * first circle reaches. "I don't know, show me" is a third button that records
+	 * **Only `screen_time` asks the child or adult question**, and its lines wait
+	 * for the answer. "I don't know, show me" is a third button that records
 	 * nothing and opens `AccountKindHelp`, beside the walkthrough, not inside it.
+	 *
+	 * **The link step asks whether to use Screen Time** (`screenTimeChoice`), a
+	 * box under its lines, off by default. While it is off, the line under it says
+	 * to skip the app's own setup question.
 	 *
 	 * Every line is drawn through `RichText`, so the labels the reader has to find
 	 * on a phone screen are bold.
@@ -30,6 +32,8 @@
 	 * @prop {string} [devicePin]
 	 * @prop {'child' | 'adult' | null} accountKind
 	 * @prop {(kind: 'child' | 'adult') => void} onChooseAccount
+	 * @prop {boolean} [screenTime]
+	 * @prop {(on: boolean) => void} [onScreenTime]
 	 * @prop {(pending: boolean) => void} onActionPending
 	 * @prop {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 * @prop {boolean} [showCopy]
@@ -42,6 +46,7 @@
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { MODE_LABELS, PIN_LINE } from '../../../utils/install/steps.js';
 	import Callout from '../../atoms/Callout.svelte';
+	import CheckBox from '../../atoms/CheckBox.svelte';
 	import ControlButton from '../../atoms/ControlButton.svelte';
 	import RichText from '../../atoms/RichText.svelte';
 	import AccountKindHelp from './AccountKindHelp.svelte';
@@ -55,6 +60,8 @@
 		devicePin = '',
 		accountKind,
 		onChooseAccount,
+		screenTime = false,
+		onScreenTime = () => {},
 		onActionPending,
 		getLink,
 		showCopy = false,
@@ -71,6 +78,7 @@
 	const ACCOUNT_ICON_ROW = 'flex h-12 items-center justify-center text-gray-700 dark:text-gray-300';
 
 	const questionId = $props.id();
+	const screenTimeHintId = `${questionId}-screen-time`;
 
 	const AGAIN_KEYS = {
 		enroll: 'DeviceInstall.enroll_again',
@@ -80,8 +88,6 @@
 	let helpOpen = $state(false);
 	/** The reader asked for a finished step's QR again, to relink or reinstall. */
 	let again = $state(false);
-	const asking = $derived(!!step.question && (step.question.asks || !accountKind));
-	const labelIsHeading = $derived(step.question?.labelKey === step.titleKey);
 	const chosen = $derived(accountKind ? step.question?.options[accountKind] : undefined);
 	const instructionKeys = $derived(step.instructionKeys ?? chosen?.instructionKeys ?? []);
 	const noteKey = $derived(chosen?.noteKey ?? step.noteKey);
@@ -161,48 +167,41 @@
 	{#if step.question}
 		{@const question = step.question}
 		<div class="space-y-2">
-			{#if asking}
-				<p
-					class={labelIsHeading
-						? 'sr-only'
-						: 'text-base font-medium text-gray-700 dark:text-gray-200'}
-					id={questionId}
-				>
-					{$t(question.labelKey)}
-				</p>
-				<div class="grid gap-2 sm:grid-cols-3" role="group" aria-labelledby={questionId}>
-					{#each ACCOUNT_ORDER as key (key)}
-						<button
-							type="button"
-							aria-pressed={accountKind === key}
-							onclick={() => chooseAccount(key)}
-							class="cursor-pointer rounded-2xl border p-3 text-center transition-colors g2 {accountKind ===
-							key
-								? 'border-azure-600 bg-azure-50 dark:border-azure-500 dark:bg-azure-950/40'
-								: 'border-gray-200 hover:border-azure-500 dark:border-gray-700 dark:hover:border-azure-400'}"
-						>
-							<span class={ACCOUNT_ICON_ROW}>{@render person(ACCOUNT_ICON_HEIGHT[key])}</span>
-							<span class="mt-1 block text-sm font-semibold text-gray-700 dark:text-gray-200">
-								{$t(question.options[key].labelKey)}
-							</span>
-						</button>
-					{/each}
-					<!-- Not an answer: it records nothing. -->
+			<p class="text-base font-medium text-gray-700 dark:text-gray-200" id={questionId}>
+				{$t(question.labelKey)}
+			</p>
+			<div class="grid gap-2 sm:grid-cols-3" role="group" aria-labelledby={questionId}>
+				{#each ACCOUNT_ORDER as key (key)}
 					<button
 						type="button"
-						aria-haspopup="dialog"
-						onclick={() => (helpOpen = true)}
-						class="cursor-pointer rounded-2xl border border-dashed border-gray-300 p-3 text-center transition-colors g2 hover:border-azure-500 dark:border-gray-600 dark:hover:border-azure-400"
+						aria-pressed={accountKind === key}
+						onclick={() => chooseAccount(key)}
+						class="cursor-pointer rounded-2xl border p-3 text-center transition-colors g2 {accountKind ===
+						key
+							? 'border-azure-600 bg-azure-50 dark:border-azure-500 dark:bg-azure-950/40'
+							: 'border-gray-200 hover:border-azure-500 dark:border-gray-700 dark:hover:border-azure-400'}"
 					>
-						<span class={ACCOUNT_ICON_ROW}>
-							<CircleHelp size={28} class="shrink-0" aria-hidden="true" />
-						</span>
+						<span class={ACCOUNT_ICON_ROW}>{@render person(ACCOUNT_ICON_HEIGHT[key])}</span>
 						<span class="mt-1 block text-sm font-semibold text-gray-700 dark:text-gray-200">
-							{$t('DeviceInstall.account_unknown_label')}
+							{$t(question.options[key].labelKey)}
 						</span>
 					</button>
-				</div>
-			{/if}
+				{/each}
+				<!-- Not an answer: it records nothing. -->
+				<button
+					type="button"
+					aria-haspopup="dialog"
+					onclick={() => (helpOpen = true)}
+					class="cursor-pointer rounded-2xl border border-dashed border-gray-300 p-3 text-center transition-colors g2 hover:border-azure-500 dark:border-gray-600 dark:hover:border-azure-400"
+				>
+					<span class={ACCOUNT_ICON_ROW}>
+						<CircleHelp size={28} class="shrink-0" aria-hidden="true" />
+					</span>
+					<span class="mt-1 block text-sm font-semibold text-gray-700 dark:text-gray-200">
+						{$t('DeviceInstall.account_unknown_label')}
+					</span>
+				</button>
+			</div>
 		</div>
 	{/if}
 
@@ -224,6 +223,37 @@
 		>
 			<RichText text={$t(lineKey(instructionKeys[0]), values)} />
 		</p>
+	{/if}
+
+	{#if step.screenTimeChoice}
+		<div class="flex items-start gap-3 rounded-2xl border border-gray-200 p-3 g2 dark:border-gray-700">
+			<div class="pt-0.5">
+				<CheckBox
+					checked={screenTime}
+					ariaLabel={$t('DeviceInstall.link_screen_time_label')}
+					describedBy={screenTimeHintId}
+					onclick={() => onScreenTime(!screenTime)}
+				/>
+			</div>
+			<div class="min-w-0 space-y-0.5">
+				<!-- The box is the control; the words are a bigger target for a pointer. -->
+				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+				<p
+					class="cursor-pointer text-base font-medium text-gray-700 dark:text-gray-200"
+					onclick={() => onScreenTime(!screenTime)}
+				>
+					{$t('DeviceInstall.link_screen_time_label')}
+				</p>
+				<p id={screenTimeHintId} class="text-sm text-gray-600 dark:text-gray-300">
+					{$t('DeviceInstall.link_screen_time_hint')}
+				</p>
+			</div>
+		</div>
+		{#if !screenTime}
+			<p class="text-sm text-gray-600 dark:text-gray-300">
+				<RichText text={$t('DeviceInstall.step_link_3')} />
+			</p>
+		{/if}
 	{/if}
 
 	{#if step.link}

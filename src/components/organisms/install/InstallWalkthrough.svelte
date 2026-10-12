@@ -15,15 +15,19 @@
 	 * then on a clock while anything is unfinished: every 5 seconds while the step
 	 * on screen is waiting on the device (the link step, the profile, the filter),
 	 * every 15 otherwise, never behind a hidden tab, and not at all once every step
-	 * is done. On the adult path it also asks `api.getProfileStatus()` until the
-	 * profile is in.
+	 * is done. It also asks `api.getProfileStatus()` until the profile is in.
 	 *
 	 * **Two kinds of step.** A step the device proves (`confirm: 'auto'`) is done
 	 * when its status says so, and has no button: it waits. Every other step is
 	 * done when someone presses "I've done this", or when the device proves it
 	 * after the fact (installing the app, once the device links). Those
-	 * presses and the Adult or Child answer live in this component only, so they
-	 * last as long as it is mounted; nothing is written to the browser.
+	 * presses, the Screen Time choice and the Adult or Child answer live in this
+	 * component only, so they last as long as it is mounted; nothing is written
+	 * to the browser.
+	 *
+	 * **Screen Time is opt-in.** The link step has a box for it, off by default;
+	 * ticking it adds the Screen Time step after the link, which is where the
+	 * Adult or Child question is asked.
 	 *
 	 * **The pager.** One step on screen, opened on the first unfinished one. No Next
 	 * until the step on screen is done; Previous is always open. The end of the
@@ -63,7 +67,7 @@
 	 *   `auto` (the technician), `both` (the customer portal) or `button` (the
 	 *   device portal); see `links.js`.
 	 * @prop {boolean} [supervised] The device is already supervised (the device
-	 *   portal): no supervise step, and no adult prerequisites.
+	 *   portal): no supervise line, and no prerequisites.
 	 */
 	import { onMount, tick } from 'svelte';
 	import { BadgeCheck, Check, ChevronLeft, ChevronRight } from '@lucide/svelte';
@@ -121,6 +125,7 @@
 	 */
 	let proven = $state(/** @type {string[]} */ ([]));
 	let accountKind = $state(/** @type {'child' | 'adult' | null} */ (null));
+	let screenTime = $state(false);
 	// Another device starts from nothing.
 	let answersFor = $state('');
 	$effect(() => {
@@ -128,12 +133,18 @@
 			attested = [];
 			proven = [];
 			accountKind = null;
+			screenTime = false;
 			answersFor = deviceId;
 		}
 	});
 
-	const stepOptions = $derived({ handover, filterHere: !!api.turnFilterOn, supervised });
-	const steps = $derived(installStepsFor(deviceType, accountKind, audience, stepOptions));
+	const stepOptions = $derived({
+		handover,
+		filterHere: !!api.turnFilterOn,
+		supervised,
+		screenTime
+	});
+	const steps = $derived(installStepsFor(deviceType, audience, stepOptions));
 	const evidence = $derived({ status, profile, now: readAt });
 
 	$effect(() => {
@@ -175,7 +186,9 @@
 		!!currentStep && !currentState?.done && currentStep.confirm === 'auto'
 	);
 
-	const wantsProfile = $derived(accountKind === 'adult' && !proven.includes('profile'));
+	const wantsProfile = $derived(
+		steps.some((step) => step.id === 'profile') && !proven.includes('profile')
+	);
 
 	let refreshing = false;
 	async function refresh() {
@@ -209,11 +222,6 @@
 			waitingOnDevice ? FAST_POLL_MS : SLOW_POLL_MS
 		);
 		return () => clearInterval(id);
-	});
-
-	// Choosing adult asks for the profile straight away rather than on the next tick.
-	$effect(() => {
-		if (wantsProfile && profile === null) refresh();
 	});
 
 	let actionPending = $state(false);
@@ -255,20 +263,6 @@
 		focusPage();
 	}
 
-	/**
-	 * The answer adds or removes steps ahead of the reader, so the page they are
-	 * reading is found again by id rather than left at a shifted index.
-	 *
-	 * @param {'child' | 'adult'} kind
-	 */
-	function handleChooseAccount(kind) {
-		if (kind === accountKind) return;
-		const readingId = onSummary ? null : currentStep?.id;
-		accountKind = kind;
-		if (!readingId) return;
-		const next = installStepsFor(deviceType, kind, audience, stepOptions).findIndex((step) => step.id === readingId);
-		if (next !== -1) viewIndex = next;
-	}
 
 	const phrase = $derived($t(installProgressPhraseKey(completedCount, steps.length)));
 	const barLabel = $derived(
@@ -352,7 +346,9 @@
 								{deviceId}
 								{devicePin}
 								{accountKind}
-								onChooseAccount={handleChooseAccount}
+								onChooseAccount={(/** @type {'child' | 'adult'} */ kind) => (accountKind = kind)}
+								{screenTime}
+								onScreenTime={(/** @type {boolean} */ on) => (screenTime = on)}
 								onActionPending={(/** @type {boolean} */ pending) => (actionPending = pending)}
 								getLink={api.getLink}
 								{showCopy}

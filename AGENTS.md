@@ -579,7 +579,7 @@ in `mb-specs/tasks/ios-v2/`; read `ios-v2-status.md` there before changing a ste
   Adding a key is a six-file edit here, and no app may re-author a `DeviceInstall`
   key, for the reason given under i18n above.
 - **Nothing is kept in the browser, and there are no fallbacks** (the owner,
-  2026-10-07). Ticks and the Adult or Child answer live in the component while it
+  2026-10-07). Ticks, the Screen Time choice and the Adult or Child answer live in the component while it
   is mounted. A step the device proves (link, profile, filter) waits for it and has
   no manual tick; a missing route or field is an error, not a reason to guess. Do not
   add localStorage, a "kept" link or a field core does not send.
