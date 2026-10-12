@@ -425,6 +425,23 @@ scroll behaviour is not decoration: it is what let one component replace both.
   place. `backAriaLabel` exists so the compact circle keeps the same accessible
   name the pill had.
 
+## Compact mode — less air, same controls
+
+A host app that offers compact spacing puts `compact` on `<html>`, and components
+tighten themselves with the `compact:` variant from `styles.css` (documented under
+CSS Classes Reference in DOCUMENTATION.md). The class is the host's own preference,
+not an estate-wide one: only the technician portal sets it, from its **Spacing**
+setting, so the default look everywhere is the comfortable one.
+
+- **Compact changes padding and gaps, not text or touch targets.** Island bodies and
+  title bars, `NamedControl` rows, `ListCard` rows, the `SectionedPage` gutters. Keep
+  controls the size they are; a smaller button is harder to hit, not denser.
+- **`compact:` wins over `sm:`**, because it is emitted later. Pair it with
+  `compact:sm:…` where a wide screen needs its own value, and undo any `sm:` value
+  it should not replace.
+- **A new layout component with generous padding should take `compact:` values too**,
+  or compact mode looks patchy around it.
+
 ## Shared preferences — one cookie, every portal
 
 The colour scheme and the language are **estate-wide preferences**: set either one in

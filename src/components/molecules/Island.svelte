@@ -78,7 +78,7 @@
 		     bottom sheet's drag handle (h-8), as the empty strip below does. With
 		     no content yet (a search before anything is typed) it is the whole
 		     island, so it closes itself off rather than leaving an empty panel. -->
-		<div class="shrink-0 px-3 pt-8 sm:px-6 sm:pt-6 {children ? '' : 'pb-3 sm:pb-6'}">
+		<div class="shrink-0 px-3 pt-8 sm:px-6 sm:pt-6 compact:sm:px-4 compact:sm:pt-4 {children ? '' : 'pb-3 sm:pb-6 compact:sm:pb-4'}">
 			{@render header()}
 		</div>
 	{:else if title && collapsible && !forceExpanded}
@@ -86,7 +86,7 @@
 		<button
 			class="flex w-full shrink-0 cursor-pointer items-center justify-between text-gray-700 hover:text-azure-700 dark:text-gray-200 dark:hover:text-azure-500 {isExpanded
 				? 'border-b'
-				: ''} border-neutral-100 px-3 py-2 transition-colors sm:px-6 sm:py-4 dark:border-zinc-750"
+				: ''} border-neutral-100 px-3 py-2 transition-colors sm:px-6 sm:py-4 compact:py-1.5 compact:sm:px-4 compact:sm:py-2 dark:border-zinc-750"
 			onclick={toggleExpanded}
 			aria-expanded={isExpanded}
 			aria-controls={panelId}
@@ -100,7 +100,7 @@
 					{@const IconComponent = icon}
 					<IconComponent size={20} strokeWidth={2} />
 				{/if}
-				<h3 class="font-medium sm:text-lg">{title}</h3>
+				<h3 class="font-medium sm:text-lg compact:sm:text-base">{title}</h3>
 			</div>
 
 			<!-- Arrow -->
@@ -113,7 +113,7 @@
 	{:else if title}
 		<!-- Header without collapse functionality -->
 		<div
-			class="shrink-0 border-b border-neutral-100 px-3 py-2 pt-5 sm:pt-auto text-gray-700 sm:px-6 sm:py-4 dark:border-zinc-750 dark:text-gray-200"
+			class="shrink-0 border-b border-neutral-100 px-3 py-2 pt-5 sm:pt-auto text-gray-700 sm:px-6 sm:py-4 compact:sm:px-4 compact:sm:py-2 dark:border-zinc-750 dark:text-gray-200"
 		>
 			<div class="flex items-center gap-2">
 				{#if svgIcon}
@@ -122,7 +122,7 @@
 					{@const IconComponent = icon}
 					<IconComponent size={20} strokeWidth={2} />
 				{/if}
-				<h3 class="font-medium sm:text-lg">{title}</h3>
+				<h3 class="font-medium sm:text-lg compact:sm:text-base">{title}</h3>
 			</div>
 		</div>
 	{:else if scrollBody}
@@ -146,18 +146,18 @@
 			<!-- 1px tall so a fractional scroll offset still counts as reaching the end;
 			     the negative margin keeps it out of the layout. -->
 			<div bind:this={topSentinel} class="-mb-px h-px" aria-hidden="true"></div>
-			<div class="p-3 sm:p-6">
+			<div class="p-3 sm:p-6 compact:p-2 compact:sm:p-4">
 				{@render children?.()}
 			</div>
 			<div bind:this={bottomSentinel} class="-mt-px h-px" aria-hidden="true"></div>
 		</div>
 	{:else}
-		<div id={panelId} class="p-3 sm:p-6 {isExpanded ? 'block' : 'hidden'}">
+		<div id={panelId} class="p-3 sm:p-6 compact:p-2 compact:sm:p-4 {isExpanded ? 'block' : 'hidden'}">
 			{@render children?.()}
 		</div>
 	{/if}
 	{#if footer}
-		<div class="shrink-0 px-3 pb-3 sm:px-6 sm:pb-6 {isExpanded ? 'block' : 'hidden'}">
+		<div class="shrink-0 px-3 pb-3 sm:px-6 sm:pb-6 compact:px-2 compact:pb-2 compact:sm:px-4 compact:sm:pb-4 {isExpanded ? 'block' : 'hidden'}">
 			{@render footer()}
 		</div>
 	{/if}

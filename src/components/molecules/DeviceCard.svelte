@@ -102,7 +102,7 @@
 	{#snippet icon()}
 		{#if showIcon}
 			<div class="flex shrink-0 flex-col items-center">
-				<div class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-750">
+				<div class="flex h-10 w-10 compact:h-8 compact:w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-750">
 					<SvgIcon
 						name={getDeviceIcon(deviceType)}
 						size="w-5 h-5"

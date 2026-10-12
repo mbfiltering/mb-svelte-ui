@@ -26,14 +26,14 @@
 
 {#if disabled}
 	<div
-		class="flex cursor-not-allowed items-center gap-3 border-b border-neutral-100 p-3 opacity-60 transition-colors last:border-b-0 dark:border-zinc-750"
+		class="flex cursor-not-allowed items-center gap-3 border-b border-neutral-100 p-3 compact:py-1.5 opacity-60 transition-colors last:border-b-0 dark:border-zinc-750"
 		title={disabledTitle}
 	>
 		{#if icon}{@render icon()}{/if}
 		<div class="min-w-0 flex-1">{@render children()}</div>
 	</div>
 {:else if isStatic}
-	<div class="flex items-center gap-3 border-b border-neutral-100 p-3 last:border-b-0 dark:border-zinc-750">
+	<div class="flex items-center gap-3 border-b border-neutral-100 p-3 compact:py-1.5 last:border-b-0 dark:border-zinc-750">
 		{#if icon}{@render icon()}{/if}
 		<div class="min-w-0 flex-1">{@render children()}</div>
 		{#if actions}{@render actions()}{/if}
@@ -53,7 +53,7 @@
 		{href}
 		{onclick}
 		data-sveltekit-reload={true}
-		class="flex items-center gap-3 border-b border-neutral-100 p-3 transition-colors last:border-b-0 hover:bg-neutral-50 dark:border-zinc-750 dark:hover:bg-zinc-750"
+		class="flex items-center gap-3 border-b border-neutral-100 p-3 compact:py-1.5 transition-colors last:border-b-0 hover:bg-neutral-50 dark:border-zinc-750 dark:hover:bg-zinc-750"
 	>
 		{#if icon}{@render icon()}{/if}
 		<div class="min-w-0 flex-1">{@render children()}</div>

@@ -87,6 +87,7 @@
 7. [CSS Classes Reference](#css-classes-reference)
    - [`g2` — squircle corners](#g2--continuous-curvature-squircle-corners)
    - [`raised` — 3D surfaces](#raised--light-on-top-shade-underneath)
+   - [`compact:` — tighter spacing](#compact--tighter-spacing)
 
 ---
 
@@ -3983,6 +3984,30 @@ html.hide-info-helpers .info-helper {
 	display: none !important;
 }
 ```
+
+### `compact:` — tighter spacing
+
+A host app that offers a denser layout (the technician portal's **Spacing** setting,
+"Comfortable" or "Compact") puts `compact` on `<html>`. `compact:` is a Tailwind
+variant registered in `styles.css` that applies only under that class, the way
+`dark:` applies under `.dark`. Without the class nothing changes, so a portal
+that never sets it sees the comfortable layout.
+
+```svelte
+<div class="p-3 sm:p-6 compact:p-2 compact:sm:p-4">…</div>
+```
+
+`compact:` rules are emitted after the breakpoint ones, so `compact:p-2` beats
+`sm:p-6` at every width. Add `compact:sm:…` when a wider screen should keep more
+room, and undo any `sm:` value the compact one should not override
+(`NamedControl` resets `compact:sm:my-0`).
+
+Components that tighten under it: `Island` (title bar, body and footer padding,
+title one size smaller), `NamedControl` (row padding), `ListCard` and
+`DeviceCard` (row height, smaller device icon), `SearchableList` (gap above the
+rows) and `SectionedPage` (page padding and the gap between islands).
+Text size, touch targets and the header bar are left alone: compact is less air,
+not smaller controls.
 
 ### Magic Search Classes
 

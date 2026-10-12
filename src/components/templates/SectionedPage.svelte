@@ -549,7 +549,7 @@
 		<!-- Not searching while the page skeleton is up: the search CSS would hide it. -->
 		<div
 			bind:this={contentArea}
-			class="w-full space-y-3 p-4 sm:space-y-6 sm:p-8 {magicSearchActive && !loading
+			class="w-full space-y-3 p-4 sm:space-y-6 sm:p-8 compact:space-y-2 compact:p-3 compact:sm:space-y-3 compact:sm:p-5 {magicSearchActive && !loading
 				? 'magicsearch-active'
 				: ''} {magicSearchNoMatches && !searchPending ? 'magicsearch-nomatches' : ''}"
 		>

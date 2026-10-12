@@ -138,6 +138,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
+   COMPACT MODE - Class-based (requires .compact on an html/body ancestor)
+   =============================================================================
+   A host app's own preference (the technician portal's "Spacing" setting), applied
+   as a class on <html> like `hide-kbd`. Components tighten their padding and gaps
+   with `compact:` utilities; without the class nothing changes. `compact:` rules are
+   emitted after the breakpoints, so `compact:p-2` beats `sm:p-6` at every width;
+   add `compact:sm:p-4` where a wider screen should keep more room. */
+
+@custom-variant compact (&:where(.compact, .compact *));
+
+/* =============================================================================
 	CUSTOM BREAKPOINTS - Responsive design
 	============================================================================= */
 

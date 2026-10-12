@@ -294,7 +294,7 @@
 
 </script>
 
-<div class="space-y-4" bind:this={rootEl}>
+<div class="space-y-4 compact:space-y-2" bind:this={rootEl}>
 	<!-- Filter Tabs -->
 	{#if filterTabs.length > 0}
 		<div
