@@ -200,7 +200,6 @@ const PREREQUISITES_STEP = {
 				...ACCOUNT_LABELS.child,
 				instructionKeys: [
 					'DeviceInstall.step_prereq_child_1',
-					'DeviceInstall.step_prereq_child_2',
 					'DeviceInstall.step_prereq_child_3'
 				]
 			},
@@ -285,8 +284,8 @@ const LINK_STEP = {
 };
 
 /**
- * The Safari extensions, in Settings. Before Screen Time: a restricted device
- * greys the switches out. Nothing reports the All Websites permission, and the
+ * The Safari extensions, in Settings. Before the app's Screen Time prompt: a
+ * restricted device greys the switches out. Nothing reports the All Websites permission, and the
  * extension's own stamp would tick this with All Websites left on Ask, which is
  * the case the step exists to catch, so it stays the person's word.
  *
@@ -304,10 +303,13 @@ const EXTENSION_STEP = {
 };
 
 /**
- * The app's child/adult fork and Apple's Screen Time approval. iOS puts "Don't
- * Allow" in the blue button, hence the red lines. The `Mode` checkpoint is the one
- * place a mismatched answer ever shows. Nothing reports Screen Time, so it is the
- * person's word.
+ * The app's child/adult fork. The `Mode` checkpoint is the one place a
+ * mismatched answer ever shows.
+ *
+ * Screen Time is optional (the owner, 2026-10-12), so it is a note, not a line
+ * to follow: iOS asks for it straight after the fork, and the note says how to
+ * skip it or turn it on. The parent's password is only needed to turn it on, so
+ * the child's prerequisites no longer ask for it.
  *
  * @type {InstallStep}
  */
@@ -320,22 +322,16 @@ const APP_SETUP_STEP = {
 		options: {
 			child: {
 				...ACCOUNT_LABELS.child,
-				instructionKeys: [
-					'DeviceInstall.step_app_setup_child_1',
-					'DeviceInstall.step_app_setup_child_2',
-					'DeviceInstall.step_app_setup_child_3'
-				]
+				instructionKeys: ['DeviceInstall.step_app_setup_child_1'],
+				noteKey: 'DeviceInstall.step_app_setup_child_note'
 			},
 			adult: {
 				...ACCOUNT_LABELS.adult,
-				instructionKeys: [
-					'DeviceInstall.step_app_setup_adult_1',
-					'DeviceInstall.step_app_setup_adult_2'
-				]
+				instructionKeys: ['DeviceInstall.step_app_setup_adult_1'],
+				noteKey: 'DeviceInstall.step_app_setup_adult_note'
 			}
 		}
 	},
-	warnKeys: ['DeviceInstall.step_app_setup_child_2', 'DeviceInstall.step_app_setup_adult_2'],
 	checkpointKey: 'DeviceInstall.step_app_setup_checkpoint',
 	confirmLabelKey: 'DeviceInstall.confirm_seen',
 	confirm: 'attest'
@@ -445,7 +441,9 @@ function technicianStep(step) {
 	if (step.question) {
 		const options = /** @type {Record<InstallAccountKind, InstallAccountOption>} */ ({});
 		for (const [kind, option] of Object.entries(step.question.options)) {
-			const { noteKey: _note, ...rest } = option;
+			// The prerequisites' notes send the reader to MB Smart support.
+			const rest = { ...option };
+			if (step.id === 'prerequisites') delete rest.noteKey;
 			options[/** @type {InstallAccountKind} */ (kind)] = {
 				...rest,
 				instructionKeys: forTechnician(option.instructionKeys, TECHNICIAN_DROPS)
