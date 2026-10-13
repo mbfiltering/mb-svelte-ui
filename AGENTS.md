@@ -349,6 +349,10 @@ unrelated things depending on which product you were looking at. Keep the split:
   technician goes home, and `ListCard` reloads for the same kind of clean start; a
   client-side chip would change where "Go back" lands afterwards. It is not free
   (a re-boot of the SPA), so revisit it with the navigation, not as a one-line tweak.
+- **`ListCard`'s open-in-new-tab control is a real link, not `window.open`.** A plain
+  click focuses the new tab. Ctrl-click, Cmd-click or middle-click opens a background
+  tab and leaves the current page where it is. Do not put it back on `window.open`:
+  that always focuses the new tab, so a technician cannot queue several devices.
 
 ## Dialogs — one island, one `ModalIsland`
 

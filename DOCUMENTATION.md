@@ -1553,7 +1553,8 @@ Device-focused list item built on top of `ListCard`, with plan and payment badge
 	paid: 'Paid',
 	unpaid: 'Unpaid',
 	syncDevice: 'Sync device',
-	notYetSupportedInPortal: 'Not yet supported in portal'
+	notYetSupportedInPortal: 'Not yet supported in portal',
+	openInNewTab: 'Open in new tab'
 }
 ```
 
@@ -1824,17 +1825,18 @@ Reusable list-row primitive for linked, static, or disabled cards with optional 
 | `disabledTitle`    | `string`   | `''`      | Tooltip shown on disabled rows                                 |
 | `static`           | `boolean`  | `false`   | Render a non-link row while keeping actions visible            |
 | `showArrow`        | `boolean`  | `true`    | Show the trailing chevron on interactive rows                  |
-| `showOpenInNewTab` | `boolean`  | `true`    | Show the open-in-new-tab button on static and interactive rows |
-| `openInNewTabHref` | `string`   | `''`      | Optional override for the URL opened in a new tab              |
+| `showOpenInNewTab`  | `boolean`  | `true`             | Show the open-in-new-tab link on static and interactive rows |
+| `openInNewTabHref`  | `string`   | `''`               | Optional override for the URL opened in a new tab            |
+| `openInNewTabLabel` | `string`   | `'Open in new tab'` | Accessible name and tooltip for that link                    |
 | `icon`             | `snippet`  | -         | Leading visual snippet                                         |
 | `actions`          | `snippet`  | -         | Trailing action snippet                                        |
 | `children`         | `snippet`  | -         | Main row content                                               |
 
 **Render modes:**
 
-- `disabled={true}` renders a `<div>` with reduced opacity and no actions or new-tab button.
-- `static={true}` renders a non-link `<div>` with optional actions and new-tab button.
-- The default mode renders an `<a>` with hover styles, optional actions, new-tab button, and optional chevron.
+- `disabled={true}` renders a `<div>` with reduced opacity and no actions or new-tab link.
+- `static={true}` renders a non-link `<div>` with optional actions and a new-tab link.
+- The default mode renders a row whose main area is an `<a>` (its hit target covers the row, including the chevron). Actions and the new-tab link sit above that hit target.
 
 **Usage:**
 
@@ -1871,9 +1873,10 @@ Reusable list-row primitive for linked, static, or disabled cards with optional 
 
 **Behavior notes:**
 
-- The new-tab button calls `window.open(resolvedUrl, '_blank')` and stops the row click from firing.
+- The new-tab control is its own link (`target="_blank"`), not `window.open`. A plain click opens a foreground tab. Ctrl-click, Cmd-click and middle-click open a background tab and leave the current page where it is. `window.open` cannot do that: it always focuses the new tab.
+- That link is not inside the row link, so activating it does not run the row's `onclick`.
 - `openInNewTabHref` falls back to `href` when not provided.
-- Interactive rows include `data-sveltekit-reload={true}` on the anchor.
+- Interactive rows include `data-sveltekit-reload={true}` on the row link.
 
 ---
 

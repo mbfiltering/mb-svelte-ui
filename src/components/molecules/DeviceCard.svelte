@@ -48,6 +48,7 @@
 		blockAll: 'Block All',
 		syncDevice: 'Sync device',
 		notYetSupportedInPortal: 'Not yet supported in portal',
+		openInNewTab: 'Open in new tab',
 		...labels
 	});
 
@@ -98,6 +99,7 @@
 	{showArrow}
 	{showOpenInNewTab}
 	{openInNewTabHref}
+	openInNewTabLabel={mergedLabels.openInNewTab}
 >
 	{#snippet icon()}
 		{#if showIcon}
