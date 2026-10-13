@@ -24,7 +24,7 @@
  * default; only then does the Screen Time step appear, and that is where the
  * Adult or Child question is asked.
  *
- *   prerequisites, install_app, link_device, [screen_time], extension, profile,
+ *   prerequisites, install_app, link_device, extension, [screen_time], profile,
  *   trust, filter_on
  *
  * The technician's list has no prerequisites: they are MB Smart support, which
@@ -249,7 +249,7 @@ const LINK_STEP = {
 };
 
 /**
- * Optional, straight after the link, and only when its box is ticked: the
+ * Optional, after the extensions, and only when the link step's box is ticked: the
  * app's child/adult fork and Apple's Screen Time approval. iOS puts "Don't
  * Allow" in the blue button, hence the red lines. The `Mode` checkpoint is the one
  * place a mismatched answer ever shows. Nothing reports Screen Time, so it is the
@@ -287,7 +287,8 @@ const SCREEN_TIME_STEP = {
 };
 
 /**
- * The Safari extensions, in Settings. Nothing reports the All Websites
+ * The Safari extensions, in Settings. Before Screen Time: a restricted device
+ * greys the switches out. Nothing reports the All Websites
  * permission, and the extension's own stamp would tick this with All Websites
  * left on Ask, which is the case the step exists to catch, so it stays the
  * person's word.
@@ -484,7 +485,7 @@ function withoutSupervision(steps) {
  *   portal, whose devices were supervised when version 1 was set up (MHomsany,
  *   2026-10-08). Drops the supervise line and the prerequisites.
  * @property {boolean} [screenTime] The reader ticked "Use Screen Time" on the
- *   link step, which adds the Screen Time step after it.
+ *   link step, which adds the Screen Time step after the extensions.
  */
 
 /**
@@ -516,8 +517,8 @@ function forAudience(deviceType, audience, screenTime) {
 		PREREQUISITES_STEP,
 		INSTALL_APP_STEP,
 		LINK_STEP,
-		...(screenTime ? [SCREEN_TIME_STEP] : []),
 		EXTENSION_STEP,
+		...(screenTime ? [SCREEN_TIME_STEP] : []),
 		PROFILE_STEP,
 		TRUST_STEP,
 		FILTER_ON_STEP

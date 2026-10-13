@@ -26,7 +26,7 @@
 	 * to the browser.
 	 *
 	 * **Screen Time is opt-in.** The link step has a box for it, off by default;
-	 * ticking it adds the Screen Time step after the link, which is where the
+	 * ticking it adds the Screen Time step after the Safari extensions, which is where the
 	 * Adult or Child question is asked.
 	 *
 	 * **The pager.** One step on screen, opened on the first unfinished one. No Next

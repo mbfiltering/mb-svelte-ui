@@ -2183,7 +2183,7 @@ There is one path for every device: supervision is the first line of the app
 step, and the profile, last, is followed by a step to trust the MB Smart
 certificate it brings, ticked by hand: nothing reports that switch. Screen Time
 is optional: a box on the link step, off by default, adds a Screen Time step
-after it, which is where the adult or child question is asked.
+after the Safari extensions, which is where the adult or child question is asked.
 
 **How a link reaches the phone** (`handover`) depends on where the portal is read.
 The App Store link and the link and profile credentials are drawn as a QR code, a
