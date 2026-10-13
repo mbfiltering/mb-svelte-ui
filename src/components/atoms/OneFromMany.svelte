@@ -1,5 +1,6 @@
 <script>
 	import { ChevronDown } from '@lucide/svelte';
+	import SaveBadge from './SaveBadge.svelte';
 
 	/**
 	 * @typedef {{
@@ -21,11 +22,16 @@
 		onSelect = () => {}, // Backwards compatibility
 		disabled = false,
 		visibleCount = 2,
+		// The save state the host tracks for this control: `saving` blocks a new
+		// pick and shows a spinner badge, without dimming it; `saved` shows a tick.
+		/** @type {'' | 'saving' | 'saved'} */
+		status = '',
 		ariaLabel = '' // Names the group, e.g. "App status" — without it the
 		// buttons announce as loose "Open"/"Closed" with nothing tying them together
 	} = $props();
 
 	const currentValue = $derived(selected ?? value);
+	const saving = $derived(status === 'saving');
 
 	// Clamp visibleCount to valid range
 	const clampedCount = $derived(Math.max(1, Math.min(visibleCount, options.length)));
@@ -98,7 +104,7 @@
 
 	// Handle clicking a fixed option
 	function handleFixedClick(optionValue) {
-		if (disabled) return;
+		if (disabled || saving) return;
 		const option = options.find((o) => o.value === optionValue);
 		if (option?.disabled) return;
 		if (onChange) onChange(optionValue);
@@ -107,7 +113,7 @@
 
 	// Handle clicking the dropdown button (toggle back to remembered selection)
 	function handleDropdownButtonClick() {
-		if (disabled) return;
+		if (disabled || saving) return;
 		if (displayedDropdownOption?.disabled) return;
 		const targetValue = displayedDropdownOption?.value;
 		lastDropdownSelection = targetValue;
@@ -117,7 +123,7 @@
 
 	// Handle selecting from dropdown
 	function handleDropdownSelect(event) {
-		if (disabled) return;
+		if (disabled || saving) return;
 		const selectedValue = event.target.value;
 		lastDropdownSelection = selectedValue; // Remember this selection
 		if (onChange) onChange(selectedValue);
@@ -125,7 +131,12 @@
 	}
 </script>
 
-<div class="inline-flex items-center gap-0" role="group" aria-label={ariaLabel || undefined}>
+<div
+	class="relative inline-flex items-center gap-0"
+	role="group"
+	aria-label={ariaLabel || undefined}
+	aria-busy={saving || undefined}
+>
 	<!-- Fixed Option Buttons -->
 	{#each fixedOptions as option, i}
 		<button
@@ -199,7 +210,7 @@
 			<select
 				onchange={handleDropdownSelect}
 				value={currentValue}
-				{disabled}
+				disabled={disabled || saving}
 				aria-label={ariaLabel || undefined}
 				class="absolute top-0 ltr:right-0 rtl:left-0 {isDropdownOnly
 					? 'h-full w-full'
@@ -219,4 +230,5 @@
 			</select>
 		</div>
 	{/if}
+	<SaveBadge {status} />
 </div>

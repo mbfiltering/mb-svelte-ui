@@ -6,7 +6,19 @@
 	import { Pencil, Check, X, Eye, EyeClosed } from '@lucide/svelte';
 
 	// Props - Svelte 5 style
-	let { fields = [], initialData = {}, onSave = async () => {}, onUpdate = () => {} } = $props();
+	let {
+		fields = [],
+		initialData = {},
+		onSave = async () => {},
+		onUpdate = () => {},
+		// i18n props, the same set SingleInput takes
+		editTitle = 'Edit',
+		saveTitle = 'Save',
+		savingTitle = 'Saving...',
+		cancelTitle = 'Cancel',
+		noChangesMessage = 'No changes to save',
+		failedMessage = 'Update failed'
+	} = $props();
 
 	// Seeded from the first `initialData`; the $effect below re-seeds on change,
 	// and the form owns the values in between.
@@ -59,7 +71,7 @@
 
 		// If nothing changed, just exit edit mode
 		if (!hasChanges) {
-			toast.info('No changes to save');
+			toast.info(noChangesMessage);
 			isEditing = false;
 			isSaving = false;
 			return;
@@ -79,10 +91,10 @@
 				// Notify parent of the update
 				onUpdate(formData);
 			} else {
-				toast.error('Update failed');
+				toast.error(failedMessage);
 			}
 		} catch (error) {
-			toast.error('Failed to update information');
+			toast.error(failedMessage);
 			console.error('Save error:', error);
 		}
 
@@ -172,10 +184,10 @@
 	<!-- Action Buttons -->
 	<div class="flex gap-2">
 		{#if !isEditing}
-			<CircleButton onclick={toggleEdit} title="Edit" icon={Pencil} />
+			<CircleButton onclick={toggleEdit} title={editTitle} icon={Pencil} />
 		{:else}
-			<CircleButton onclick={toggleEdit} disabled={isSaving} title="Cancel" icon={X} />
-			<CircleButton type="submit" disabled={isSaving} title={isSaving ? 'Saving...' : 'Save'} color="azure" icon={Check} />
+			<CircleButton onclick={toggleEdit} disabled={isSaving} title={cancelTitle} icon={X} />
+			<CircleButton type="submit" disabled={isSaving} loading={isSaving} title={isSaving ? savingTitle : saveTitle} color="azure" icon={Check} />
 		{/if}
 	</div>
 </form>

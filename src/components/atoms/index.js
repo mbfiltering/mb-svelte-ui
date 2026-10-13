@@ -22,6 +22,7 @@ export { default as QrCode } from './QrCode.svelte';
 export { default as RadioButton } from './RadioButton.svelte';
 export { default as RichText } from './RichText.svelte';
 export { default as SafetyBadge } from './SafetyBadge.svelte';
+export { default as SaveBadge } from './SaveBadge.svelte';
 export { default as SingleInput } from './SingleInput.svelte';
 export { default as Skeleton } from './Skeleton.svelte';
 export { default as Spinner } from './Spinner.svelte';

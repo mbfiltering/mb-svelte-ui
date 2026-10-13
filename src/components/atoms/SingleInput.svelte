@@ -23,6 +23,7 @@
 		savingTitle = 'Saving...',
 		cancelTitle = 'Cancel',
 		noChangesMessage = 'No changes to save',
+		failedMessage = 'Update failed',
 		emptyMessage = '', // Full message for empty state (overrides default)
 		disabled = false
 	} = $props();
@@ -77,10 +78,10 @@
 				// Notify parent of the update
 				onUpdate(currentValue);
 			} else {
-				saveError = 'Update failed';
+				saveError = failedMessage;
 			}
 		} catch (error) {
-			saveError = `Failed to update ${label.toLowerCase()}`;
+			saveError = failedMessage;
 			console.error('Save error:', error);
 		}
 
@@ -140,6 +141,7 @@
 			<CircleButton
 				onclick={save}
 				disabled={isSaving || disabled}
+				loading={isSaving}
 				title={isSaving ? savingTitle : saveTitle}
 				color="azure"
 				icon={Check}

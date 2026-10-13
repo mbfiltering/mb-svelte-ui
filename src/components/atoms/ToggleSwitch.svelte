@@ -9,7 +9,15 @@
 	 * would *override* that, and the old `Toggle ${label}` default did exactly
 	 * that on every toggle in both portals. It also concatenated English, which
 	 * the style guide forbids.
+	 *
+	 * `status` is the save state the host tracks for this switch. `saving` blocks
+	 * clicks and spins in the knob (a badge on the icon variant) without dimming
+	 * it: the switch is busy, not unavailable. `saved` shows a tick for as long
+	 * as the host keeps it there.
 	 */
+	import { Check, LoaderCircle } from '@lucide/svelte';
+	import SaveBadge from './SaveBadge.svelte';
+
 	let {
 		label = '', // Visible-label hint, kept for callers that pass it
 		ariaLabel = '',
@@ -25,7 +33,12 @@
 		iconSize = 18,
 		onText = 'On',
 		offText = 'Off',
+		/** @type {'' | 'saving' | 'saved'} */
+		status = '',
 	} = $props();
+
+	const saving = $derived(status === 'saving');
+	const blocked = $derived(disabled || saving);
 
 	// Only emit a name when one was actually supplied — see the note above.
 	const name = $derived(customLabel || ariaLabel || undefined);
@@ -50,9 +63,12 @@
 {#if variant === 'icon'}
 	<button
 		type="button"
-		onclick={() => !disabled && onChange(!checked)}
+		onclick={() => !blocked && onChange(!checked)}
 		{disabled}
-		class="g2 flex cursor-pointer items-center gap-2 rounded-lg p-2 transition-colors disabled:cursor-default disabled:opacity-50 {checked
+		aria-busy={saving || undefined}
+		class="g2 relative flex items-center gap-2 rounded-lg p-2 transition-colors {saving
+			? 'cursor-progress'
+			: 'cursor-pointer'} disabled:cursor-default disabled:opacity-50 {checked
 			? colorOn.replace('bg-', 'bg-') + ' text-white dark:text-zinc-750'
 			: colorOff.replace('bg-', 'bg-') + ' text-gray-700 dark:text-gray-200'}"
 		aria-label={name}
@@ -67,6 +83,7 @@
 			{@const IconOff = iconOff}
 			<IconOff size={iconSize} />
 		{/if}
+		<SaveBadge {status} />
 	</button>
 {:else}
 	<div class="flex gap-2 items-center">
@@ -75,9 +92,12 @@
 		</p>
 		<button
 			type="button"
-			onclick={() => !disabled && onChange(!checked)}
+			onclick={() => !blocked && onChange(!checked)}
 			{disabled}
-			class="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors disabled:cursor-default disabled:opacity-50 {checked
+			aria-busy={saving || undefined}
+			class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {saving
+				? 'cursor-progress'
+				: 'cursor-pointer'} disabled:cursor-default disabled:opacity-50 {checked
 				? colorOn
 				: colorOff}"
 			aria-label={name}
@@ -85,11 +105,17 @@
 			aria-checked={checked}
 		>
 			<span
-				class="knob pointer-events-none absolute top-1 h-4 w-4 rounded-full bg-white"
+				class="knob pointer-events-none absolute top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white"
 				class:on={checked}
 				class:travel-on={travel === 'on'}
 				class:travel-off={travel === 'off'}
-			></span>
+			>
+				{#if saving}
+					<LoaderCircle size={12} strokeWidth={3} class="animate-spin text-azure-600" />
+				{:else if status === 'saved'}
+					<Check size={12} strokeWidth={3} class="text-green-alt-600" />
+				{/if}
+			</span>
 		</button>
 	</div>
 {/if}

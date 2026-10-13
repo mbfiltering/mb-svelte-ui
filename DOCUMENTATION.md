@@ -38,6 +38,7 @@
    - [RadioButton](#radiobutton)
    - [RichText](#richtext)
    - [SafetyBadge](#safetybadge)
+   - [SaveBadge](#savebadge)
    - [SingleInput](#singleinput)
    - [Skeleton](#skeleton)
    - [Spinner](#spinner)
@@ -840,6 +841,7 @@ Segmented button selector for choosing one option from a list.
 | `disabled` | `boolean`  | `false`    | Disables all options                           |
 | `visibleCount` | `number` | `2` | How many options render as visible buttons; when `options.length > visibleCount` the last visible slot becomes a dropdown containing the remaining options. Values `<= 1` render a single fully clickable dropdown control |
 | `ariaLabel` | `string` | `''` | Names the group, e.g. `"App status: WhatsApp"` |
+| `status` | `string` | `''` | Save state: `''`, `'saving'` (spinner badge, a new pick is blocked, not dimmed) or `'saved'` (a tick badge) |
 
 **Option object:**
 
@@ -1005,6 +1007,16 @@ Risk level badge with color-coded styling.
 
 ---
 
+### SaveBadge
+
+The small round mark a control wears while its change is being saved (a spinner) and briefly after the server confirmed it (a tick). `ToggleSwitch` and `OneFromMany` render it from their own `status` prop, so a host rarely needs it directly. Absolutely positioned on the top end corner, so the parent must be `relative`; decorative (`aria-hidden`), since the control carries `aria-busy`.
+
+| Prop     | Type     | Default | Description                         |
+| -------- | -------- | ------- | ----------------------------------- |
+| `status` | `string` | `''`    | `''` (nothing), `'saving'` or `'saved'` |
+
+---
+
 ### SingleInput
 
 Inline editable field with Edit/Save/Cancel functionality.
@@ -1036,6 +1048,7 @@ Inline editable field with Edit/Save/Cancel functionality.
 | `savingTitle`      | `string`   | `'Saving...'`         | Tooltip while save is in progress       |
 | `cancelTitle`      | `string`   | `'Cancel'`            | Tooltip for the cancel button           |
 | `noChangesMessage` | `string`   | `'No changes to save'`| Toast when save is clicked with no change |
+| `failedMessage`    | `string`   | `'Update failed'`     | Error shown when the save fails without a message of its own |
 | `emptyMessage`     | `string`   | `''`                  | Empty-state copy (defaults from label)  |
 | `disabled`         | `boolean`  | `false`               | Disables edit/save/cancel and the input |
 
@@ -1416,6 +1429,7 @@ Toggle switch with default and icon variants.
 | `iconSize`    | `number`    | `18`             | Icon size (icon variant)            |
 | `onText`      | `string`    | `'On'`           | i18n "On" text                      |
 | `offText`     | `string`    | `'Off'`          | i18n "Off" text                     |
+| `status`      | `string`    | `''`             | Save state: `''`, `'saving'` (spinner in the knob, clicks blocked, not dimmed) or `'saved'` (a tick) |
 
 **Usage:**
 
@@ -1883,6 +1897,9 @@ Multi-field form with Edit/Save/Cancel and change tracking.
 | `initialData` | `object`   | `{}`             | Initial values object          |
 | `onSave`      | `function` | `async () => {}` | Async save function            |
 | `onUpdate`    | `function` | `() => {}`       | Callback after successful save |
+| `editTitle`, `saveTitle`, `savingTitle`, `cancelTitle` | `string` | English | Button tooltips, as on SingleInput |
+| `noChangesMessage` | `string` | `'No changes to save'` | Toast when nothing changed |
+| `failedMessage` | `string` | `'Update failed'` | Toast when the save fails without a message of its own |
 
 **Field Configuration:**
 

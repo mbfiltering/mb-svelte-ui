@@ -163,7 +163,7 @@ src/
 
 | Layer       | Purpose                              | Examples                          |
 |-------------|--------------------------------------|-----------------------------------|
-| **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, QrCode, RichText, Spinner, TextInput |
+| **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, QrCode, RichText, SaveBadge, Spinner, TextInput |
 | **Molecules** | Composed of atoms, reusable groups | Field, Grid, HeaderNav, Island, MultiInput, PageHeader |
 | **Organisms** | Complex, self-contained features   | InstallWalkthrough, Modal, ModalIsland, SearchableList, TermsContent, ToastContainer |
 | **Templates** | Page layouts and shells            | AppShell, SectionedPage           |
