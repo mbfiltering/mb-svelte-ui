@@ -353,6 +353,9 @@ unrelated things depending on which product you were looking at. Keep the split:
   click focuses the new tab. Ctrl-click, Cmd-click or middle-click opens a background
   tab and leaves the current page where it is. Do not put it back on `window.open`:
   that always focuses the new tab, so a technician cannot queue several devices.
+  The actions sit in a flex row above the row's hit target. Do not make that wrapper
+  a plain block: device search then draws the protection status above Sync instead
+  of beside it.
 
 ## Dialogs — one island, one `ModalIsland`
 

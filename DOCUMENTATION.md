@@ -1836,7 +1836,7 @@ Reusable list-row primitive for linked, static, or disabled cards with optional 
 
 - `disabled={true}` renders a `<div>` with reduced opacity and no actions or new-tab link.
 - `static={true}` renders a non-link `<div>` with optional actions and a new-tab link.
-- The default mode renders a row whose main area is an `<a>` (its hit target covers the row, including the chevron). Actions and the new-tab link sit above that hit target.
+- The default mode renders a row whose main area is an `<a>` (its hit target covers the row, including the chevron). Actions and the new-tab link sit above that hit target. The actions wrapper is a flex row with the card's gap, so several actions stay side by side.
 
 **Usage:**
 

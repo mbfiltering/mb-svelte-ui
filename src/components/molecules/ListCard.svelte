@@ -58,7 +58,9 @@
 	</div>
 {:else}
 	<!-- The row link's ::after covers the row, so the padding and the chevron
-	     are part of the hit target. Actions and the new-tab link sit above it. -->
+	     are part of the hit target. Actions and the new-tab link sit above it.
+	     The actions wrapper is a flex row on purpose: a block would stack them,
+	     and device search would draw the protection status above Sync. -->
 	<div
 		class="relative flex items-center gap-3 border-b border-neutral-100 p-3 transition-colors compact:py-1.5 last:border-b-0 hover:bg-neutral-50 dark:border-zinc-750 dark:hover:bg-zinc-750"
 	>
@@ -74,7 +76,7 @@
 			{@render children()}
 		</a>
 		{#if actions}
-			<div class="relative z-10">{@render actions()}</div>
+			<div class="relative z-10 flex shrink-0 items-center gap-3">{@render actions()}</div>
 		{/if}
 		{@render newTabLink()}
 		{#if showArrow}
