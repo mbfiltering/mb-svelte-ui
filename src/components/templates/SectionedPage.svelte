@@ -4,6 +4,7 @@
 	import Kbd from '../atoms/Kbd.svelte';
 	import ControlButton from '../atoms/ControlButton.svelte';
 	import Modal from '../organisms/Modal.svelte';
+	import ModalIsland from '../organisms/ModalIsland.svelte';
 	import { Search, X, ListCollapse, Ellipsis } from '@lucide/svelte';
 	import { fuzzyIncludes } from '../../utils/stringUtils.js';
 
@@ -109,6 +110,11 @@
 	let magicSearchNoMatches = $state(false);
 	let contentArea = $state(null);
 	let overflowMenuOpen = $state(false);
+	let moreSectionsOpen = $state(false);
+	let sidebarEl = $state(null);
+	let tabListEl = $state(null);
+	// How many section tabs the sm+ sidebar has room for; the rest go behind "More"
+	let tabsThatFit = $state(Infinity);
 
 	// Derived state
 	let magicSearchActive = $derived(magicSearchEnabled && magicSearchQuery.trim().length > 0);
@@ -118,6 +124,53 @@
 	let unimportantSections = $derived(sections.filter((s) => s.unimportant));
 	let hasOverflowItems = $derived(unimportantSections.length > 0 || navActions.length > 0);
 	let unimportantSectionActive = $derived(unimportantSections.some((s) => s.key === activeSection));
+
+	// Every width lists the sections in the same order: the important ones, then the rest
+	let orderedSections = $derived([...importantSections, ...unimportantSections]);
+	// From sm up, the tabs with no room above the bottom of the screen
+	let moreSections = $derived(orderedSections.slice(tabsThatFit));
+	let moreSectionActive = $derived(moreSections.find((s) => s.key === activeSection));
+
+	// Space kept under the last tab: the tab list's padding and a margin above the screen's edge
+	const tabListBottomRoom = 24;
+
+	// Count the tabs that fit between the first tab and the bottom of the screen. Measured
+	// from the first tab, which is always shown, against the sidebar's sticky top, so the
+	// answer does not depend on how far the page is scrolled or on which tabs are hidden.
+	function measureTabs() {
+		if (!sidebarEl || !tabListEl) return;
+		const sidebarStyle = getComputedStyle(sidebarEl);
+		// Below sm the sidebar is the fixed bottom bar, which has its own overflow menu
+		if (sidebarStyle.position !== 'sticky') {
+			tabsThatFit = Infinity;
+			return;
+		}
+		const firstTab = tabListEl.querySelector('[data-section-tab]');
+		if (!firstTab) return;
+		const gap = parseFloat(getComputedStyle(firstTab).marginBlockEnd) || 0;
+		const step = firstTab.offsetHeight + gap;
+		const top =
+			parseFloat(sidebarStyle.top) +
+			firstTab.getBoundingClientRect().top -
+			sidebarEl.getBoundingClientRect().top;
+		const fit = Math.floor((window.innerHeight - top - tabListBottomRoom + gap) / step);
+		// When some do not fit, "More" takes the last place
+		tabsThatFit = fit >= orderedSections.length ? Infinity : Math.max(1, fit - 1);
+	}
+
+	// Measure again when the screen, the sections, or the sidebar above the tabs change
+	$effect(() => {
+		if (!sidebarEl || !tabListEl) return;
+		orderedSections.length;
+		measureTabs();
+		const observer = new ResizeObserver(measureTabs);
+		observer.observe(sidebarEl);
+		window.addEventListener('resize', measureTabs);
+		return () => {
+			observer.disconnect();
+			window.removeEventListener('resize', measureTabs);
+		};
+	});
 
 	// Typing-vs-hotkey disambiguation. Bare printable keys are buffered briefly
 	// so a double-tap shortcut combo (the same key twice — e.g. CC to collapse
@@ -435,6 +488,7 @@
 		<!-- Mobile: height fits icon button + in-flow label (not absolute — absolute labels
 		     collapsed to zero layout height and got clipped by overflow/h-18). -->
 		<div
+			bind:this={sidebarEl}
 			class="lg:w-96 fixed bottom-0 left-0 z-10 flex h-auto min-h-18 w-full shrink-0 flex-col space-y-4 sm:sticky sm:top-14 sm:h-[calc(100%-3.5rem)] sm:min-h-0 sm:w-24 sm:pt-8"
 		>
 			{#if loading}
@@ -456,6 +510,7 @@
 					<!-- space-y only from sm up (vertical sidebar). On mobile the bar is horizontal —
 					     space-y would stagger tabs. Labels are in-flow under icons, so sm gap is modest. -->
 					<ul
+						bind:this={tabListEl}
 						aria-label={sectionsLabel}
 						class="flex items-start justify-evenly sm:space-y-3 lg:space-y-2 sm:inline sm:w-auto sm:justify-normal"
 					>
@@ -486,9 +541,18 @@
 							</div>
 						{/if}
 
-					<!-- Section tabs (unimportant ones hidden on mobile) -->
-					{#each sections as section}
-						<li class="flex flex-col items-center me-2 sm:me-0 px-0 sm:px-[1.375rem] lgv:px-0 lg:px-0 {section.unimportant ? 'hidden sm:list-item' : ''}">
+					<!-- Section tabs (unimportant ones hidden on mobile, the ones with no room hidden from sm up) -->
+					{#each orderedSections as section, i (section.key)}
+						<li
+							data-section-tab
+							class="flex flex-col items-center me-2 sm:me-0 px-0 sm:px-[1.375rem] lgv:px-0 lg:px-0 {i >= tabsThatFit
+								? section.unimportant
+									? 'hidden'
+									: 'sm:hidden'
+								: section.unimportant
+									? 'hidden sm:list-item'
+									: ''}"
+						>
 								<button
 									type="button"
 									onclick={() => selectSection(section.key)}
@@ -522,6 +586,28 @@
 								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {magicSearchActive ? 'font-medium text-gray-400 dark:text-gray-500' : activeSection === section.key ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{section.name}</p>
 							</li>
 						{/each}
+
+						<!-- "More" (sm and up): the tabs with no room in the sidebar -->
+						{#if moreSections.length > 0}
+							<li class="hidden sm:flex flex-col items-center sm:px-[1.375rem] lgv:px-0 lg:px-0">
+								<button
+									type="button"
+									onclick={() => (moreSectionsOpen = true)}
+									title={moreSectionActive?.name || overflowMenuTitle}
+									aria-haspopup="dialog"
+									class="g2 lg:px-4 flex lg:w-full items-center justify-center lg:justify-start gap-2 rounded-lg border px-2 py-2 transition-colors {magicSearchActive
+										? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-700/50 opacity-50 dark:border-gray-800/25 dark:bg-gray-900 dark:text-gray-200/50'
+										: moreSectionActive
+											? 'cursor-pointer border-azure-500 bg-gradient-to-bl from-azure-500 to-azure-700 text-white hover:bg-azure-900'
+											: 'cursor-pointer border-azure-100 bg-azure-50 text-azure-700 hover:bg-azure-100 dark:border-zinc-750 dark:bg-zinc-800 dark:text-azure-200 dark:hover:bg-zinc-750'}"
+									disabled={magicSearchActive}
+								>
+									<Ellipsis size={18} strokeWidth={2} />
+									<p class="lg:inline-block hidden font-medium truncate">{moreSectionActive?.name || overflowMenuTitle}</p>
+								</button>
+								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {magicSearchActive ? 'font-medium text-gray-400 dark:text-gray-500' : moreSectionActive ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{moreSectionActive?.name || overflowMenuTitle}</p>
+							</li>
+						{/if}
 
 						<!-- Overflow / Ellipsis menu button (mobile only) -->
 						{#if hasOverflowItems}
@@ -669,31 +755,42 @@
 	</div>
 </div>
 
+<!-- A section in the mobile overflow sheet or the "More" dialog; picking one closes it -->
+{#snippet sectionMenuItem(section, close, showShortcut)}
+	<li>
+		<button
+			type="button"
+			onclick={() => { selectSection(section.key); close(); }}
+			disabled={magicSearchActive}
+			class="{magicSearchActive
+				? 'cursor-not-allowed opacity-50 text-gray-400 dark:text-gray-500'
+				: activeSection === section.key
+					? 'cursor-pointer bg-azure-50 text-azure-700 dark:bg-azure-900/30 dark:text-azure-200'
+					: 'cursor-pointer text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-zinc-750'} g2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition-colors"
+		>
+			{#if section.svgIcon}
+				<SvgIcon name={section.svgIcon} size="w-[20px] h-[20px]" />
+			{:else if section.icon}
+				<section.icon size={20} strokeWidth={2} />
+			{/if}
+			<span class="{activeSection === section.key ? 'font-semibold' : 'font-medium'}">{section.name}</span>
+			{#if showShortcut && hotkeysEnabled && section.shortcut}
+				<Kbd>Alt + Shift + {section.shortcut}</Kbd>
+			{/if}
+			{#if showShortcut && section.advanced}
+				<span class="ms-auto text-sm">{advancedText}</span>
+			{/if}
+		</button>
+	</li>
+{/snippet}
+
 <!-- Overflow menu Modal (mobile) -->
 <Modal isOpen={overflowMenuOpen} onClose={() => (overflowMenuOpen = false)} verticalAlign="bottom">
 	<div class="g2 rounded-t-2xl bg-white p-4 pt-6 dark:bg-zinc-800">
 		<ul class="space-y-1">
 			<!-- Unimportant section tabs -->
-			{#each unimportantSections as section}
-				<li>
-					<button
-						type="button"
-						onclick={() => { selectSection(section.key); overflowMenuOpen = false; }}
-						disabled={magicSearchActive}
-						class="{magicSearchActive
-							? 'cursor-not-allowed opacity-50 text-gray-400 dark:text-gray-500'
-							: activeSection === section.key
-								? 'cursor-pointer bg-azure-50 text-azure-700 dark:bg-azure-900/30 dark:text-azure-200'
-								: 'cursor-pointer text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-zinc-750'} g2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition-colors"
-					>
-						{#if section.svgIcon}
-							<SvgIcon name={section.svgIcon} size="w-[20px] h-[20px]" />
-						{:else if section.icon}
-							<section.icon size={20} strokeWidth={2} />
-						{/if}
-						<span class="{activeSection === section.key ? 'font-semibold' : 'font-medium'}">{section.name}</span>
-					</button>
-				</li>
+			{#each unimportantSections as section (section.key)}
+				{@render sectionMenuItem(section, () => (overflowMenuOpen = false), false)}
 			{/each}
 
 			<!-- Divider between sections and nav actions -->
@@ -716,3 +813,17 @@
 		</ul>
 	</div>
 </Modal>
+
+<!-- "More" dialog (sm and up): only the sections; the sidebar already shows the nav actions -->
+<ModalIsland
+	isOpen={moreSectionsOpen}
+	onClose={() => (moreSectionsOpen = false)}
+	title={overflowMenuTitle}
+	icon={Ellipsis}
+>
+	<ul class="space-y-1">
+		{#each moreSections as section (section.key)}
+			{@render sectionMenuItem(section, () => (moreSectionsOpen = false), true)}
+		{/each}
+	</ul>
+</ModalIsland>

@@ -3071,7 +3071,9 @@ An ellipsis (`...`) button appears at the end of the bottom bar when there are o
 - **Unimportant sections** — section tabs marked with `unimportant: true`
 - **Nav actions** — all `navActions` buttons (these are always hidden from the mobile bottom bar)
 
-On `sm:` and above, the sidebar shows all sections and nav actions as normal — the overflow menu is mobile-only.
+**Section order:** every width lists the important sections first and the unimportant ones after them, each group in `sections` order. The bottom bar and its overflow sheet already split them that way; the sidebar uses the same order so a tab is in the same place on every screen.
+
+**Desktop "More":** on `sm:` and above the sidebar shows the nav actions and as many section tabs as fit between the first tab and the bottom of the viewport (`measureTabs`, re-run on window resize and whenever the sidebar resizes, e.g. a longer `header`). When some do not fit, the last place is a **More** tab (`overflowMenuTitle`) that opens a `ModalIsland` listing the rest, with their shortcuts. It lists sections only, since the sidebar already shows the nav actions. More is highlighted, and shows the section's name, while one of its sections is active; it is disabled during a magic search like the tabs. The count is taken from the first tab's height and spacing against the sidebar's sticky `top`, so it does not change with scroll position and assumes the tabs are all the same height. At least one tab is always shown.
 
 ---
 
