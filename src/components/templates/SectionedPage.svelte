@@ -40,6 +40,7 @@
 	 * - isVisible(sectionKey): returns true if section should be shown
 	 * - isVisibleMulti(sectionKey, ...additionalKeys): returns true if any key matches
 	 * - islandProps: object with defaultExpanded and forceExpanded for Islands
+	 * - islandPropsFor(key): islandProps that also remember this island's state in islandStates
 	 */
 
 	// Props
@@ -77,6 +78,11 @@
 		// Default expanded state for all Islands (used on initial render)
 		defaultIslandsExpanded = true,
 
+		// Remembered expanded state per island key, for ctx.islandPropsFor(key).
+		// Captured on mount; onIslandStatesChange receives every change to save it.
+		islandStates = {},
+		onIslandStatesChange = undefined,
+
 		// Keyboard shortcuts (Alt+Shift+<letter>, double-tap CC) and their
 		// Kbd hints — on by default, some host apps opt out entirely.
 		hotkeysEnabled = true,
@@ -104,6 +110,8 @@
 	// svelte-ignore state_referenced_locally
 	let allIslandsExpanded = $state(defaultIslandsExpanded);
 	let islandResetKey = $state(0);
+	// svelte-ignore state_referenced_locally
+	let savedIslandStates = $state({ ...islandStates });
 	let magicSearchQuery = $state('');
 	let magicSearchInput = $state(null);
 	let magicSearchFocused = $state(false);
@@ -216,6 +224,8 @@
 	// Toggle all islands expanded/collapsed
 	function toggleAllIslands() {
 		allIslandsExpanded = !allIslandsExpanded;
+		savedIslandStates = {}; // Every island follows the new default
+		onIslandStatesChange?.({});
 		islandResetKey++; // Force re-render all islands with new default
 	}
 
@@ -478,7 +488,17 @@
 		islandProps: {
 			defaultExpanded: allIslandsExpanded,
 			forceExpanded: magicSearchActive
-		}
+		},
+
+		// Same, plus the island's own state kept under `key` across tab switches and reloads
+		islandPropsFor: (key) => ({
+			defaultExpanded: savedIslandStates[key] ?? allIslandsExpanded,
+			forceExpanded: magicSearchActive,
+			onToggle: (expanded) => {
+				savedIslandStates[key] = expanded;
+				onIslandStatesChange?.($state.snapshot(savedIslandStates));
+			}
+		})
 	});
 </script>
 

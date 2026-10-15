@@ -9,6 +9,7 @@
 		svgIcon = '', // Name of SVG file in /static/icons (without .svg extension)
 		defaultExpanded = true,
 		forceExpanded = false, // When true, island is always expanded and cannot be collapsed
+		onToggle = undefined, // Called with the new expanded state when the header toggles it
 		className = '',
 		collapsible = true,
 		collapseLabel = 'Collapse', // Tooltip text when expanded
@@ -63,6 +64,7 @@
 	function toggleExpanded() {
 		if (!forceExpanded) {
 			internalExpanded = !internalExpanded;
+			onToggle?.(internalExpanded);
 		}
 	}
 </script>

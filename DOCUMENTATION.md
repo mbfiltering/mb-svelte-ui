@@ -1746,6 +1746,7 @@ Collapsible card container with optional title and icon.
 | `svgIcon`         | `string`    | `''`    | SVG icon name from /static/icons |
 | `defaultExpanded` | `boolean`   | `true`  | Initial expanded state           |
 | `forceExpanded`   | `boolean`   | `false` | Always expanded, no toggle       |
+| `onToggle`        | `function`  | -       | Called with the new expanded state when the header toggles it |
 | `collapsible`     | `boolean`   | `true`  | Enable collapse functionality    |
 | `collapseLabel`   | `string`    | `'Collapse'` | Header tooltip when expanded |
 | `expandLabel`     | `string`    | `'Expand'`   | Header tooltip when collapsed |
@@ -2936,6 +2937,8 @@ Full page layout template: sticky header, loading progress bar, main content are
 | `magicSearchPendingText` | `string` | `'Still loading. Some results may not show yet.'` | The line shown under the search bar while searching with `searchPending` set |
 | `overflowMenuTitle` | `string` | `'More'` | Title for the mobile overflow menu |
 | `defaultIslandsExpanded` | `boolean` | `true` | Initial expanded state for all Islands rendered via `ctx.islandProps`. Captured on mount; users can still toggle expand/collapse all afterwards. |
+| `islandStates` | `object` | `{}` | Remembered expanded state per island key, read by `ctx.islandPropsFor(key)`. Captured on mount. Overrides `defaultIslandsExpanded` for the islands it names; collapse/expand all clears it. |
+| `onIslandStatesChange` | `function` | - | Receives the whole `islandStates` map whenever an island toggles or collapse/expand all clears it, for the host to save. |
 | `hotkeysEnabled`  | `boolean`  | `true`     | Master switch for the keyboard shortcuts (`Alt+Shift+{letter}` section nav, double-tap `CC`) and their `Kbd` hint badges. Set `false` to disable all shortcuts and hide the hints — magic search still works by clicking/typing into the input, and per-section `shortcut` badges are suppressed. |
 | `magicSearchEnabled` | `boolean` | `true`  | Master switch for magic search. Set `false` to hide the search input, its `Kbd`/clear hints and the no-results message, and to stop bare-key typing from feeding the search. Section tabs and the collapse/expand-all control stay, and the collapse control right-aligns in place of the input. Independent of `hotkeysEnabled` (double-tap `CC` still toggles all islands). |
 | `collapseAllEnabled` | `boolean` | `true`  | Master switch for the collapse/expand-all control. Set `false` to hide the collapse-all button and stop the double-tap `CC` hotkey from toggling all islands. Individual islands still collapse via their own headers. |
@@ -2985,7 +2988,10 @@ The `sectionContent` snippet receives a context object with:
   isVisibleMulti(...sectionKeys),  // Returns true if any key matches
 
   // Props for Island components:
-  islandProps: { defaultExpanded, forceExpanded }
+  islandProps: { defaultExpanded, forceExpanded },
+  // Same, plus onToggle: the island keeps its state under `key` while it unmounts
+  // on a tab switch, and the host can save it via onIslandStatesChange
+  islandPropsFor(key)
 }
 ```
 
