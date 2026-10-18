@@ -2847,6 +2847,8 @@ Full page layout template: sticky header, loading progress bar, main content are
 
 **The header is identity, the footer is product.** The header carries the signed-in account (avatar + name) and the nav; the product name ("MB Smart Filtering", "MB Smart Technician") lives in the footer with the version, the way a copyright line does. Do not pass a product name as `userName` — that conflation is what made the two portals' headers mean different things.
 
+**A long `userName` truncates; the header's controls never shrink**, so a long name cannot push them off the bar on a phone.
+
 **It publishes `--mb-header-h`** (`56px`, the header's own `h-14`) on its wrapper, so anything pinning itself under the header can read the offset instead of guessing it. [PageHeader](#pageheader) is the one consumer today. The header and the loading bar both sit at `z-20`; anything pinned beneath them belongs below that.
 
 **Import:**

@@ -94,8 +94,9 @@
 				{/if}
 			</a>
 
-			<!-- App content (search and the like), then the nav -->
-			<div class="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4">
+			<!-- App content (search and the like), then the nav. Never shrinks, so a
+			     long name truncates instead of pushing these off the bar. -->
+			<div class="flex shrink-0 grow items-center justify-end gap-2 sm:gap-4">
 				{#if headerContent}
 					{@render headerContent()}
 				{/if}
