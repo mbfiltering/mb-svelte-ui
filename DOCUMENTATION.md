@@ -2950,6 +2950,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 | `magicSearchEnabled` | `boolean` | `true`  | Master switch for magic search. Set `false` to hide the search input, its `Kbd`/clear hints and the no-results message, and to stop bare-key typing from feeding the search. Section tabs and the collapse/expand-all control stay, and the collapse control right-aligns in place of the input. Independent of `hotkeysEnabled` (double-tap `CC` still toggles all islands). |
 | `collapseAllEnabled` | `boolean` | `true`  | Master switch for the collapse/expand-all control. Set `false` to hide the collapse-all button and stop the double-tap `CC` hotkey from toggling all islands. Individual islands still collapse via their own headers. |
 | `header`          | `snippet`  | -          | Header content               |
+| `searchActions`   | `snippet`  | -          | Icon buttons between the magic search and collapse/expand all. The row's inset keeps collapse/expand all over the islands' chevrons in every spacing mode, so a 36px button here lines up over a 36px button in an island's `actions` |
 | `sidebarSkeleton` | `snippet`  | -          | Loading skeleton for sidebar |
 | `mainSkeleton`    | `snippet`  | -          | Loading skeleton for main    |
 | `sectionContent`  | `snippet`  | -          | Section content renderer     |

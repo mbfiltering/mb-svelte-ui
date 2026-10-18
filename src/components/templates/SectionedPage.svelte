@@ -99,6 +99,7 @@
 
 		// Snippets (sidebarSkeleton and mainSkeleton are required for loading states)
 		header = undefined,
+		searchActions = undefined, // Snippet of icon buttons before collapse/expand all
 		sidebarSkeleton = undefined,
 		mainSkeleton = undefined,
 		sectionContent = undefined
@@ -674,8 +675,9 @@
 					</div>
 				{/if}
 
-				<!-- Magic Search Bar -->
-				<div class="flex gap-1 px-4">
+				<!-- Magic Search Bar. The inset puts collapse/expand all over the islands'
+				     chevrons in every spacing mode. -->
+				<div class="flex gap-1 px-1 sm:px-4 compact:sm:px-2">
 					{#if magicSearchEnabled}
 					<div class="lg:px-0 relative flex-1">
 						<div class="relative">
@@ -720,6 +722,9 @@
 							{/if}
 						</div>
 					</div>
+					{/if}
+					{#if searchActions}
+						{@render searchActions()}
 					{/if}
 					<!-- Collapse/Expand All -->
 					{#if collapseAllEnabled}

@@ -117,7 +117,9 @@
 
 			{#if actions}
 				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-				<div class="flex shrink-0 items-center gap-1" onclick={(e) => e.stopPropagation()}>
+				<!-- me-1: a 36px button here centres 40px from the chevron, as the page's
+				     buttons above sit from collapse/expand all -->
+				<div class="me-1 flex shrink-0 items-center gap-1" onclick={(e) => e.stopPropagation()}>
 					{@render actions()}
 				</div>
 			{/if}
