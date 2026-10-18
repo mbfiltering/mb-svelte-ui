@@ -18,6 +18,7 @@
 		header = undefined, // Snippet pinned above the content in place of the title bar, such as a search field. Wins over `title`
 		footer = undefined, // Snippet pinned under the content, for the island's actions
 		actions = undefined, // Snippet in the title bar, before the chevron, for small icon buttons
+		leading = undefined, // Snippet at the start of the title bar, before the icon, such as a checkbox
 		children = undefined
 	} = $props();
 
@@ -96,6 +97,12 @@
 			onclick={toggleExpanded}
 			title={isExpanded ? collapseLabel : expandLabel}
 		>
+			{#if leading}
+				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+				<div class="flex shrink-0 items-center" onclick={(e) => e.stopPropagation()}>
+					{@render leading()}
+				</div>
+			{/if}
 			<button
 				type="button"
 				class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-start transition-colors group-hover:text-azure-700 dark:group-hover:text-azure-500"
@@ -139,6 +146,9 @@
 			class="shrink-0 border-b border-neutral-100 px-3 py-2 pt-5 sm:pt-auto text-gray-700 sm:px-6 sm:py-4 compact:sm:px-4 compact:sm:py-2 dark:border-zinc-750 dark:text-gray-200"
 		>
 			<div class="flex items-center gap-2">
+				{#if leading}
+					<div class="flex shrink-0 items-center">{@render leading()}</div>
+				{/if}
 				{#if svgIcon}
 					<SvgIcon name={svgIcon} size="w-5 h-5" />
 				{:else if icon}

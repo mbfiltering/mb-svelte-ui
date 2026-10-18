@@ -1756,6 +1756,7 @@ Collapsible card container with optional title and icon.
 | `header`          | `snippet`   | -       | Pinned above the content in place of the title bar (no title, no toggle), such as a search field. Wins over `title`. With no `children` the header is the whole island, with no empty panel under it |
 | `footer`          | `snippet`   | -       | Pinned under the content, for the island's actions |
 | `actions`         | `snippet`   | -       | Small icon buttons in the title bar, before the chevron. Clicks in it never toggle the island |
+| `leading`         | `snippet`   | -       | At the start of the title bar, before the icon, such as a checkbox. Clicks in it never toggle the island |
 | `children`        | `snippet`   | -       | Island content                   |
 
 **Accessibility:** the header is a real button carrying `aria-expanded` and
