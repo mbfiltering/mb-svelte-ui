@@ -118,7 +118,9 @@ export const translations = {
 		link_troubleshoot_button: "После нажатия ничего не произошло? Убедитесь, что **MB Smart Protect** установлено, и нажмите кнопку ещё раз. Каждая ссылка срабатывает один раз, а эта страница создаёт новую каждые несколько минут.",
 		enroll_creating_link: "Готовим ссылку…",
 		step_filter_on_1_here: "Нажмите **Включите фильтр** ниже.",
+		step_filter_on_1_here_tech: "Нажмите **Включить защиту** ниже.",
 		filter_on_button: "Включите фильтр",
+		filter_on_button_tech: "Включить защиту",
 		filter_on_working: "Включаем фильтр…",
 		filter_on_error: "Не удалось включить фильтр. Попробуйте ещё раз."
 	}

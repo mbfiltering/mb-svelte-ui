@@ -103,8 +103,9 @@
  * @property {string} [confirmedKey] The control row's words once the device proves
  *   it, in place of "Confirmed by the device".
  * @property {(evidence: InstallStepEvidence) => boolean} [isDone]
- * @property {boolean} [filterSwitch] The step offers a button that turns the
- *   filter on from here; see `installStepsFor`'s `filterHere`.
+ * @property {'power' | 'play'} [filterSwitch] The step offers a button that
+ *   turns the filter on from here; see `installStepsFor`'s `filterHere`. `play`
+ *   is the technician portal's Enable protection button.
  * @property {boolean} [screenTimeChoice] The step asks whether to use Screen
  *   Time, which adds or removes the `screen_time` step.
  */
@@ -437,25 +438,30 @@ function withLines(step, lines) {
 	return next;
 }
 
+/** The line that says where the switch is, once the switch is in the step. */
+const FILTER_HERE_LINES = /** @type {Record<string, string>} */ ({
+	'DeviceInstall.step_filter_on_1': 'DeviceInstall.step_filter_on_1_here',
+	'DeviceInstall.step_filter_on_1_tech': 'DeviceInstall.step_filter_on_1_here_tech'
+});
+
 /**
  * The last step where the filter is turned on from the walkthrough itself: the
- * device portal, which is where the customer's copy sends them. A button in
- * place of the way there, and no PIN, since this portal is already open.
+ * device portal, or the technician portal's popup. A button in place of the way
+ * there, and no PIN, since this portal is already open.
  *
  * @param {InstallStep} step
+ * @param {InstallAudience} audience
  * @returns {InstallStep}
  */
-function filterHereStep(step) {
+function filterHereStep(step, audience) {
 	if (step.id !== 'filter_on') return step;
 	const { link: _link, noteKey: _note, ...rest } = step;
 	return {
 		...rest,
 		instructionKeys: (step.instructionKeys ?? [])
 			.filter((key) => key !== PIN_LINE.key)
-			.map((key) =>
-				key === 'DeviceInstall.step_filter_on_1' ? 'DeviceInstall.step_filter_on_1_here' : key
-			),
-		filterSwitch: true
+			.map((key) => FILTER_HERE_LINES[key] ?? key),
+		filterSwitch: audience === 'technician' ? 'play' : 'power'
 	};
 }
 
@@ -500,7 +506,7 @@ export function installStepsFor(deviceType, audience = 'customer', options = {})
 	const lines = HANDOVER_LINES[options.handover ?? 'auto'];
 	let steps = forAudience(deviceType, audience, !!options.screenTime);
 	if (lines) steps = steps.map((step) => withLines(step, lines));
-	if (options.filterHere) steps = steps.map(filterHereStep);
+	if (options.filterHere) steps = steps.map((step) => filterHereStep(step, audience));
 	if (options.supervised) steps = withoutSupervision(steps);
 	return steps;
 }

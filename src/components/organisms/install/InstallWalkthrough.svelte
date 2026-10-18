@@ -47,8 +47,8 @@
 	 * @property {(kind: 'enroll' | 'profile') => Promise<{ link?: string | null }>} getLink
 	 *   See `InstallLinkAction`.
 	 * @property {() => Promise<void>} [turnFilterOn] Only where the portal can turn
-	 *   the filter on itself (the device portal). The last step then offers a
-	 *   button for it instead of sending the reader to the device portal.
+	 *   the filter on itself (the device portal, the technician portal). The last
+	 *   step then offers a button for it instead of sending the reader elsewhere.
 	 *
 	 * @prop {string} deviceId
 	 * @prop {string} deviceType

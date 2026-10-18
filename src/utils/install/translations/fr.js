@@ -118,7 +118,9 @@ export const translations = {
 		link_troubleshoot_button: "Rien ne s'est passé en touchant le bouton ? Vérifiez que **MB Smart Protect** est installée, puis touchez-le à nouveau. Chaque lien ne sert qu'une fois, et cette page en crée un nouveau toutes les quelques minutes.",
 		enroll_creating_link: "Préparation du lien…",
 		step_filter_on_1_here: "Touchez **Activez le filtre** ci-dessous.",
+		step_filter_on_1_here_tech: "Appuyez sur **Activer la protection** ci-dessous.",
 		filter_on_button: "Activez le filtre",
+		filter_on_button_tech: "Activer la protection",
 		filter_on_working: "Activation du filtre…",
 		filter_on_error: "Le filtre n'a pas pu être activé. Veuillez réessayer."
 	}

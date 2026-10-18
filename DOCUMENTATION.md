@@ -2219,7 +2219,8 @@ button that opens them in place, or both:
 The lines that say to scan the code change with it (`step_link_1_both`,
 `step_link_1_button` and so on). Where `api.turnFilterOn` is given, the last
 step offers **Turn on the filter** instead of the way to the device portal and
-its PIN; the device still confirms the step. `supervised` is for a device
+its PIN (for `technician`, a Play button named **Enable protection**, like the
+device page's); the device still confirms the step. `supervised` is for a device
 that is supervised already (the device portal's are): no prerequisites, and no
 supervise line on the app step.
 
@@ -2248,7 +2249,7 @@ supervise line on the app step.
 | `headingLevel` | `1 | 2` | `1` | Of the progress phrase; step titles sit one below |
 | `closeHint` | `boolean` | `false` | Say on the summary that the tab can be closed |
 | `showCopy` | `boolean` | `false` | "Copy link" under each QR, for someone sending it on |
-| `audience` | `'customer' | 'technician'` | `'customer'` | `technician` drops the lines about MB Smart support, the time it takes and the device portal, and says to turn the filter on with **Enable protection** |
+| `audience` | `'customer' | 'technician'` | `'customer'` | `technician` drops the lines about MB Smart support, the time it takes and the device portal, and says to turn the filter on with **Enable protection** (in the step itself, with `turnFilterOn`) |
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
 | `handover` | `'auto' | 'both' | 'button'` | `'auto'` | How a link reaches the phone; see above |
 | `supervised` | `boolean` | `false` | The device is supervised already: no prerequisites or supervise line |

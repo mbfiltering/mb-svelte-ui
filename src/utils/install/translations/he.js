@@ -118,7 +118,9 @@ export const translations = {
 		link_troubleshoot_button: "שום דבר לא קרה כשהקשתם? ודאו ש-**MB Smart Protect** מותקנת, ואז הקישו על הכפתור שוב. כל קישור עובד פעם אחת, והדף הזה יוצר קישור חדש כל כמה דקות.",
 		enroll_creating_link: "מכין את הקישור…",
 		step_filter_on_1_here: "הקישו למטה על **הפעל את הסינון**.",
+		step_filter_on_1_here_tech: "לחצו למטה על **הפעל הגנה**.",
 		filter_on_button: "הפעל את הסינון",
+		filter_on_button_tech: "הפעל הגנה",
 		filter_on_working: "מפעיל את הסינון…",
 		filter_on_error: "לא ניתן היה להפעיל את הסינון. נסו שוב."
 	}

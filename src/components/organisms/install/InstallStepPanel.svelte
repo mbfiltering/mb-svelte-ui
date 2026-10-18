@@ -23,8 +23,8 @@
 	 * an already-linked device has to be relinkable).
 	 *
 	 * **The filter can be turned on from here** where the portal can do it (the
-	 * device portal): the last step then has a button instead of a way to the
-	 * device portal. The device confirms the step, as everywhere else.
+	 * device portal, the technician portal): the last step then has a button
+	 * instead of a way there. The device confirms the step, as everywhere else.
 	 *
 	 * @prop {import('../../../utils/install/steps.js').InstallStep} step
 	 * @prop {boolean} done
@@ -42,7 +42,7 @@
 	 *   rejects when the filter could not be turned on.
 	 * @prop {2 | 3 | 4} [headingLevel]
 	 */
-	import { CircleHelp, Loader, Power, QrCode, RotateCw } from '@lucide/svelte';
+	import { CircleHelp, Loader, Play, Power, QrCode, RotateCw } from '@lucide/svelte';
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { MODE_LABELS, PIN_LINE } from '../../../utils/install/steps.js';
 	import Callout from '../../atoms/Callout.svelte';
@@ -118,7 +118,14 @@
 	/** @param {string} key */
 	const isWarn = (key) => step.warnKeys?.includes(key);
 
+	/** The technician's is the device page's own Play button, named the same. */
+	const FILTER_SWITCH = {
+		power: { icon: Power, labelKey: 'DeviceInstall.filter_on_button' },
+		play: { icon: Play, labelKey: 'DeviceInstall.filter_on_button_tech' }
+	};
+
 	const showFilterSwitch = $derived(!!step.filterSwitch && !!turnFilterOn && !done);
+	const filterSwitch = $derived(FILTER_SWITCH[step.filterSwitch ?? 'power']);
 	let switchingOn = $state(false);
 	let filterFailed = $state(false);
 
@@ -299,8 +306,8 @@
 					loadingLabel={$t('DeviceInstall.filter_on_working')}
 					onclick={switchFilterOn}
 				>
-					<Power size={16} aria-hidden="true" />
-					{$t('DeviceInstall.filter_on_button')}
+					<filterSwitch.icon size={16} aria-hidden="true" />
+					{$t(filterSwitch.labelKey)}
 				</ControlButton>
 			</div>
 			{#if filterFailed}
