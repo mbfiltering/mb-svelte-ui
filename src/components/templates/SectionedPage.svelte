@@ -100,6 +100,9 @@
 		// Snippets (sidebarSkeleton and mainSkeleton are required for loading states)
 		header = undefined,
 		searchActions = undefined, // Snippet of icon buttons before collapse/expand all
+		// Snippet that takes over the content: shown in place of the search row and the
+		// islands, which stay mounted but hidden. Tabs and hotkeys are off meanwhile.
+		takeover = undefined,
 		sidebarSkeleton = undefined,
 		mainSkeleton = undefined,
 		sectionContent = undefined
@@ -127,6 +130,7 @@
 
 	// Derived state
 	let magicSearchActive = $derived(magicSearchEnabled && magicSearchQuery.trim().length > 0);
+	let tabsDisabled = $derived(magicSearchActive || !!takeover);
 
 	// Split sections into important (shown on bottom bar) and unimportant (tucked into overflow)
 	let importantSections = $derived(sections.filter((s) => !s.unimportant));
@@ -370,6 +374,7 @@
 		) {
 			return;
 		}
+		if (takeover) return;
 
 		if (hotkeysEnabled) {
 			// Alt + Shift + letter section navigation (definite shortcut — bypass typing delay)
@@ -579,12 +584,12 @@
 									onclick={() => selectSection(section.key)}
 									title={section.name}
 									aria-current={activeSection === section.key ? 'true' : undefined}
-									class="g2 lg:px-4 flex lg:w-full items-center justify-between rounded-lg border px-2 py-2 transition-colors gap-1 sm:justify-center lgv:justify-between lg:justify-between {magicSearchActive
+									class="g2 lg:px-4 flex lg:w-full items-center justify-between rounded-lg border px-2 py-2 transition-colors gap-1 sm:justify-center lgv:justify-between lg:justify-between {tabsDisabled
 										? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-700/50 opacity-50 dark:border-gray-800/25 dark:bg-gray-900 dark:text-gray-200/50'
 										: activeSection === section.key
 											? 'cursor-pointer border-azure-500 bg-gradient-to-bl from-azure-500 to-azure-700 text-white hover:bg-azure-900'
 											: 'cursor-pointer border-azure-100 bg-azure-50 text-azure-700 hover:bg-azure-100 dark:border-zinc-750 dark:bg-zinc-800 dark:text-azure-200 dark:hover:bg-zinc-750'}"
-									disabled={magicSearchActive}
+									disabled={tabsDisabled}
 								>
 								<div class="sm:flex-row sm:gap-2 flex items-center lg:gap-2">
 									{#if section.svgIcon}
@@ -604,7 +609,7 @@
 									{/if}
 								</button>
 								<!-- Label under button (mobile + sm-to-lg sidebar, hidden at lg+) — in flow -->
-								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {magicSearchActive ? 'font-medium text-gray-400 dark:text-gray-500' : activeSection === section.key ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{section.name}</p>
+								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {tabsDisabled ? 'font-medium text-gray-400 dark:text-gray-500' : activeSection === section.key ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{section.name}</p>
 							</li>
 						{/each}
 
@@ -616,17 +621,17 @@
 									onclick={() => (moreSectionsOpen = true)}
 									title={moreSectionActive?.name || overflowMenuTitle}
 									aria-haspopup="dialog"
-									class="g2 lg:px-4 flex lg:w-full items-center justify-center lg:justify-start gap-2 rounded-lg border px-2 py-2 transition-colors {magicSearchActive
+									class="g2 lg:px-4 flex lg:w-full items-center justify-center lg:justify-start gap-2 rounded-lg border px-2 py-2 transition-colors {tabsDisabled
 										? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-700/50 opacity-50 dark:border-gray-800/25 dark:bg-gray-900 dark:text-gray-200/50'
 										: moreSectionActive
 											? 'cursor-pointer border-azure-500 bg-gradient-to-bl from-azure-500 to-azure-700 text-white hover:bg-azure-900'
 											: 'cursor-pointer border-azure-100 bg-azure-50 text-azure-700 hover:bg-azure-100 dark:border-zinc-750 dark:bg-zinc-800 dark:text-azure-200 dark:hover:bg-zinc-750'}"
-									disabled={magicSearchActive}
+									disabled={tabsDisabled}
 								>
 									<Ellipsis size={18} strokeWidth={2} />
 									<p class="lg:inline-block hidden font-medium truncate">{moreSectionActive?.name || overflowMenuTitle}</p>
 								</button>
-								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {magicSearchActive ? 'font-medium text-gray-400 dark:text-gray-500' : moreSectionActive ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{moreSectionActive?.name || overflowMenuTitle}</p>
+								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {tabsDisabled ? 'font-medium text-gray-400 dark:text-gray-500' : moreSectionActive ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{moreSectionActive?.name || overflowMenuTitle}</p>
 							</li>
 						{/if}
 
@@ -656,9 +661,9 @@
 		<!-- Not searching while the page skeleton is up: the search CSS would hide it. -->
 		<div
 			bind:this={contentArea}
-			class="w-full space-y-3 p-4 sm:space-y-6 sm:p-8 compact:space-y-2 compact:p-3 compact:sm:space-y-3 compact:sm:p-5 {magicSearchActive && !loading
+			class="w-full space-y-3 p-4 sm:space-y-6 sm:p-8 compact:space-y-2 compact:p-3 compact:sm:space-y-3 compact:sm:p-5 {magicSearchActive && !loading && !takeover
 				? 'magicsearch-active'
-				: ''} {magicSearchNoMatches && !searchPending ? 'magicsearch-nomatches' : ''}"
+				: ''} {takeover ? '[&>:not([data-takeover])]:hidden' : ''} {magicSearchNoMatches && !searchPending ? 'magicsearch-nomatches' : ''}"
 		>
 			{#if loading}
 				{#if mainSkeleton}
@@ -670,9 +675,13 @@
 			{:else}
 				<!-- Header on mobile (shown on mobile, hidden on desktop since it's in sidebar) -->
 				{#if header}
-					<div class="lg:hidden inline-block w-full">
+					<div data-takeover class="lg:hidden inline-block w-full">
 						{@render header()}
 					</div>
+				{/if}
+
+				{#if takeover}
+					<div data-takeover>{@render takeover()}</div>
 				{/if}
 
 				<!-- Magic Search Bar. The inset puts collapse/expand all over the islands'
@@ -786,8 +795,8 @@
 		<button
 			type="button"
 			onclick={() => { selectSection(section.key); close(); }}
-			disabled={magicSearchActive}
-			class="{magicSearchActive
+			disabled={tabsDisabled}
+			class="{tabsDisabled
 				? 'cursor-not-allowed opacity-50 text-gray-400 dark:text-gray-500'
 				: activeSection === section.key
 					? 'cursor-pointer bg-azure-50 text-azure-700 dark:bg-azure-900/30 dark:text-azure-200'

@@ -2951,6 +2951,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 | `collapseAllEnabled` | `boolean` | `true`  | Master switch for the collapse/expand-all control. Set `false` to hide the collapse-all button and stop the double-tap `CC` hotkey from toggling all islands. Individual islands still collapse via their own headers. |
 | `header`          | `snippet`  | -          | Header content               |
 | `searchActions`   | `snippet`  | -          | Icon buttons between the magic search and collapse/expand all. The row's inset keeps collapse/expand all over the islands' chevrons in every spacing mode, so a 36px button here lines up over a 36px button in an island's `actions` |
+| `takeover`        | `snippet`  | -          | Replaces the search row and the section content while set (e.g. a preview of changes). The islands stay mounted but hidden, the mobile header stays, and section tabs and hotkeys are off |
 | `sidebarSkeleton` | `snippet`  | -          | Loading skeleton for sidebar |
 | `mainSkeleton`    | `snippet`  | -          | Loading skeleton for main    |
 | `sectionContent`  | `snippet`  | -          | Section content renderer     |
