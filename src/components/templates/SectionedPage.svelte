@@ -518,7 +518,7 @@
 			{:else}
 				<!-- Header slot (hidden on mobile, shown on desktop) -->
 				{#if header}
-					<div class="lgv:inline-block hidden ps-4">
+					<div class="lg:inline-block hidden ps-4">
 						{@render header()}
 					</div>
 				{/if}
@@ -669,7 +669,7 @@
 			{:else}
 				<!-- Header on mobile (shown on mobile, hidden on desktop since it's in sidebar) -->
 				{#if header}
-					<div class="lgv:hidden inline-block w-full">
+					<div class="lg:hidden inline-block w-full">
 						{@render header()}
 					</div>
 				{/if}
