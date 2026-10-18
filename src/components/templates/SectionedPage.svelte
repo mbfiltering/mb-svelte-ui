@@ -64,6 +64,7 @@
 		magicSearchPlaceholder = 'Magic search...',
 		magicSearchNoResultsPrefix = 'Nothing found for',
 		magicSearchNoResultsSuffix = 'Check your spelling, or try searching for related words.',
+		magicSearchNothingElsePrefix = 'Nothing else found for',
 		magicSearchPendingText = 'Still loading. Some results may not show yet.',
 		collapseAllSectionsTitle = 'Collapse all sections',
 		expandAllSectionsTitle = 'Expand all sections',
@@ -103,6 +104,11 @@
 		// Snippet that takes over the content: shown in place of the search row and the
 		// islands, which stay mounted but hidden. Tabs and hotkeys are off meanwhile.
 		takeover = undefined,
+		// Snippet after the results while searching, for matches the page hides (e.g. a
+		// switched-off setting). Set only while there are some; the no-results line then says "nothing else".
+		magicSearchHint = undefined,
+		// The search text, bindable so the host can look for matches outside the islands.
+		magicSearchQuery = $bindable(''),
 		sidebarSkeleton = undefined,
 		mainSkeleton = undefined,
 		sectionContent = undefined
@@ -116,7 +122,6 @@
 	let islandResetKey = $state(0);
 	// svelte-ignore state_referenced_locally
 	let savedIslandStates = $state({ ...islandStates });
-	let magicSearchQuery = $state('');
 	let magicSearchInput = $state(null);
 	let magicSearchFocused = $state(false);
 	let magicSearchNoMatches = $state(false);
@@ -766,24 +771,28 @@
 					</p>
 				{/if}
 
-				<!-- Magic search: No results message -->
-				{#if magicSearchEnabled}
-				<div class="magicsearch-noresults p-8 text-center">
-					<p class="text-gray-900/50 dark:text-gray-50/50">
-						{magicSearchNoResultsPrefix} <span class="font-medium text-gray-700 dark:text-gray-200"
-							>"{magicSearchQuery}"</span
-						><br /><br />
-						{magicSearchNoResultsSuffix}
-					</p>
-				</div>
-				{/if}
-
 				<!-- Section content -->
 				{#key islandResetKey}
 					{#if sectionContent}
 						{@render sectionContent(sectionContext)}
 					{/if}
 				{/key}
+
+				<!-- Magic search: the host's hidden matches, then the no-results message -->
+				{#if magicSearchEnabled}
+				{@const hint = magicSearchActive ? magicSearchHint : undefined}
+				<div class="p-8 text-center text-gray-900/50 dark:text-gray-50/50 {hint ? '' : 'magicsearch-noresults'}">
+					{#if hint}
+						{@render hint()}
+					{/if}
+					<p class="magicsearch-noresults {hint ? 'mt-6' : ''}">
+						{hint ? magicSearchNothingElsePrefix : magicSearchNoResultsPrefix} <span class="font-medium text-gray-700 dark:text-gray-200"
+							>"{magicSearchQuery}"</span
+						><br /><br />
+						{magicSearchNoResultsSuffix}
+					</p>
+				</div>
+				{/if}
 			{/if}
 		</div>
 	</div>

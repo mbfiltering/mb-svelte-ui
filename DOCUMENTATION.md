@@ -2952,6 +2952,9 @@ Full page layout template: sticky header, loading progress bar, main content are
 | `header`          | `snippet`  | -          | Header content               |
 | `searchActions`   | `snippet`  | -          | Icon buttons between the magic search and collapse/expand all. The row's inset keeps collapse/expand all over the islands' chevrons in every spacing mode, so a 36px button here lines up over a 36px button in an island's `actions` |
 | `takeover`        | `snippet`  | -          | Replaces the search row and the section content while set (e.g. a preview of changes). The islands stay mounted but hidden, the mobile header stays, and section tabs and hotkeys are off |
+| `magicSearchHint` | `snippet`  | -          | Shown after the results while searching, for matches the page hides (e.g. sections behind a setting). Pass it only while there are some: the no-results message then sits under it and starts with `magicSearchNothingElsePrefix` |
+| `magicSearchNothingElsePrefix` | `string` | `'Nothing else found for'` | The no-results prefix under `magicSearchHint` |
+| `magicSearchQuery` | `string` | `''`     | The search text. Bindable, so the host can match it against content that is not on the page |
 | `sidebarSkeleton` | `snippet`  | -          | Loading skeleton for sidebar |
 | `mainSkeleton`    | `snippet`  | -          | Loading skeleton for main    |
 | `sectionContent`  | `snippet`  | -          | Section content renderer     |
