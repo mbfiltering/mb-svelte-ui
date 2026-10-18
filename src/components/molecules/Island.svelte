@@ -17,6 +17,7 @@
 		scrollBody = false, // Header and footer stay put; only the content scrolls. Needs a height-bounded flex parent (ModalIsland)
 		header = undefined, // Snippet pinned above the content in place of the title bar, such as a search field. Wins over `title`
 		footer = undefined, // Snippet pinned under the content, for the island's actions
+		actions = undefined, // Snippet in the title bar, before the chevron, for small icon buttons
 		children = undefined
 	} = $props();
 
@@ -84,18 +85,27 @@
 			{@render header()}
 		</div>
 	{:else if title && collapsible && !forceExpanded}
-		<!-- Header with collapse functionality -->
-		<button
-			class="flex w-full shrink-0 cursor-pointer items-center justify-between text-gray-700 hover:text-azure-700 dark:text-gray-200 dark:hover:text-azure-500 {isExpanded
+		<!-- Header with collapse functionality. The row toggles too, so the chevron
+		     stays clickable with `actions` between it and the button; keyboard
+		     users have the button. -->
+		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+		<div
+			class="group flex w-full shrink-0 cursor-pointer items-center gap-2 text-gray-700 dark:text-gray-200 {isExpanded
 				? 'border-b'
-				: ''} border-neutral-100 px-3 py-2 transition-colors sm:px-6 sm:py-4 compact:py-1.5 compact:sm:px-4 compact:sm:py-2 dark:border-zinc-750"
+				: ''} border-neutral-100 px-3 py-2 sm:px-6 sm:py-4 compact:py-1.5 compact:sm:px-4 compact:sm:py-2 dark:border-zinc-750"
 			onclick={toggleExpanded}
-			aria-expanded={isExpanded}
-			aria-controls={panelId}
 			title={isExpanded ? collapseLabel : expandLabel}
 		>
-			<!-- Title with Icon -->
-			<div class="flex items-center gap-2">
+			<button
+				type="button"
+				class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-start transition-colors group-hover:text-azure-700 dark:group-hover:text-azure-500"
+				onclick={(e) => {
+					e.stopPropagation();
+					toggleExpanded();
+				}}
+				aria-expanded={isExpanded}
+				aria-controls={panelId}
+			>
 				{#if svgIcon}
 					<SvgIcon name={svgIcon} size="w-5 h-5" />
 				{:else if icon}
@@ -103,15 +113,24 @@
 					<IconComponent size={20} strokeWidth={2} />
 				{/if}
 				<h3 class="font-medium sm:text-lg compact:sm:text-base">{title}</h3>
-			</div>
+			</button>
+
+			{#if actions}
+				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+				<div class="flex shrink-0 items-center gap-1" onclick={(e) => e.stopPropagation()}>
+					{@render actions()}
+				</div>
+			{/if}
 
 			<!-- Arrow -->
 			<ChevronDown
 				size={20}
-				class="h-5 w-5 transition-transform {isExpanded ? 'rotate-180' : ''}"
+				class="h-5 w-5 shrink-0 transition-transform group-hover:text-azure-700 dark:group-hover:text-azure-500 {isExpanded
+					? 'rotate-180'
+					: ''}"
 				aria-hidden="true"
 			/>
-		</button>
+		</div>
 	{:else if title}
 		<!-- Header without collapse functionality -->
 		<div
@@ -124,7 +143,10 @@
 					{@const IconComponent = icon}
 					<IconComponent size={20} strokeWidth={2} />
 				{/if}
-				<h3 class="font-medium sm:text-lg compact:sm:text-base">{title}</h3>
+				<h3 class="min-w-0 flex-1 font-medium sm:text-lg compact:sm:text-base">{title}</h3>
+				{#if actions}
+					<div class="flex shrink-0 items-center gap-1">{@render actions()}</div>
+				{/if}
 			</div>
 		</div>
 	{:else if scrollBody}
