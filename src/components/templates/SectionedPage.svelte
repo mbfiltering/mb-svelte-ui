@@ -711,6 +711,7 @@
 								onkeydown={(e) => {
 									if (e.key === 'Escape') {
 										e.preventDefault();
+										clearMagicSearch();
 										magicSearchInput?.blur();
 									}
 								}}
