@@ -443,6 +443,8 @@ setting, so the default look everywhere is the comfortable one.
 - **Compact changes padding and gaps, not text or touch targets.** Island bodies and
   title bars, `NamedControl` rows, `ListCard` rows, the `SectionedPage` gutters. Keep
   controls the size they are; a smaller button is harder to hit, not denser.
+  The one exception is `SectionedPage`'s sm+ section tabs (`compact:sm:py-1`), asked for
+  so more tabs fit in the sidebar before it has to scroll.
 - **`compact:` wins over `sm:`**, because it is emitted later. Pair it with
   `compact:sm:…` where a wide screen needs its own value, and undo any `sm:` value
   it should not replace.

@@ -4,7 +4,6 @@
 	import Kbd from '../atoms/Kbd.svelte';
 	import ControlButton from '../atoms/ControlButton.svelte';
 	import Modal from '../organisms/Modal.svelte';
-	import ModalIsland from '../organisms/ModalIsland.svelte';
 	import { Search, X, ListCollapse, Ellipsis } from '@lucide/svelte';
 	import { fuzzyIncludes } from '../../utils/stringUtils.js';
 
@@ -127,11 +126,12 @@
 	let magicSearchNoMatches = $state(false);
 	let contentArea = $state(null);
 	let overflowMenuOpen = $state(false);
-	let moreSectionsOpen = $state(false);
-	let sidebarEl = $state(null);
-	let tabListEl = $state(null);
-	// How many section tabs the sm+ sidebar has room for; the rest go behind "More"
-	let tabsThatFit = $state(Infinity);
+	// sm+ tab scroll fades, the same sentinel mechanism as Island's scrollBody
+	let tabScrollEl = $state(null);
+	let tabTopSentinel = $state(null);
+	let tabBottomSentinel = $state(null);
+	let tabFadeTop = $state(false);
+	let tabFadeBottom = $state(false);
 
 	// Derived state
 	let magicSearchActive = $derived(magicSearchEnabled && magicSearchQuery.trim().length > 0);
@@ -145,49 +145,21 @@
 
 	// Every width lists the sections in the same order: the important ones, then the rest
 	let orderedSections = $derived([...importantSections, ...unimportantSections]);
-	// From sm up, the tabs with no room above the bottom of the screen
-	let moreSections = $derived(orderedSections.slice(tabsThatFit));
-	let moreSectionActive = $derived(moreSections.find((s) => s.key === activeSection));
 
-	// Space kept under the last tab: the tab list's padding and a margin above the screen's edge
-	const tabListBottomRoom = 24;
-
-	// Count the tabs that fit between the first tab and the bottom of the screen. Measured
-	// from the first tab, which is always shown, against the sidebar's sticky top, so the
-	// answer does not depend on how far the page is scrolled or on which tabs are hidden.
-	function measureTabs() {
-		if (!sidebarEl || !tabListEl) return;
-		const sidebarStyle = getComputedStyle(sidebarEl);
-		// Below sm the sidebar is the fixed bottom bar, which has its own overflow menu
-		if (sidebarStyle.position !== 'sticky') {
-			tabsThatFit = Infinity;
-			return;
-		}
-		const firstTab = tabListEl.querySelector('[data-section-tab]');
-		if (!firstTab) return;
-		const gap = parseFloat(getComputedStyle(firstTab).marginBlockEnd) || 0;
-		const step = firstTab.offsetHeight + gap;
-		const top =
-			parseFloat(sidebarStyle.top) +
-			firstTab.getBoundingClientRect().top -
-			sidebarEl.getBoundingClientRect().top;
-		const fit = Math.floor((window.innerHeight - top - tabListBottomRoom + gap) / step);
-		// When some do not fit, "More" takes the last place
-		tabsThatFit = fit >= orderedSections.length ? Infinity : Math.max(1, fit - 1);
-	}
-
-	// Measure again when the screen, the sections, or the sidebar above the tabs change
 	$effect(() => {
-		if (!sidebarEl || !tabListEl) return;
-		orderedSections.length;
-		measureTabs();
-		const observer = new ResizeObserver(measureTabs);
-		observer.observe(sidebarEl);
-		window.addEventListener('resize', measureTabs);
-		return () => {
-			observer.disconnect();
-			window.removeEventListener('resize', measureTabs);
-		};
+		if (!tabScrollEl || !tabTopSentinel || !tabBottomSentinel) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.target === tabTopSentinel) tabFadeTop = !entry.isIntersecting;
+					else tabFadeBottom = !entry.isIntersecting;
+				}
+			},
+			{ root: tabScrollEl }
+		);
+		observer.observe(tabTopSentinel);
+		observer.observe(tabBottomSentinel);
+		return () => observer.disconnect();
 	});
 
 	// Typing-vs-hotkey disambiguation. Bare printable keys are buffered briefly
@@ -518,9 +490,9 @@
 		<!-- Sidebar -->
 		<!-- Mobile: height fits icon button + in-flow label (not absolute — absolute labels
 		     collapsed to zero layout height and got clipped by overflow/h-18). -->
+		<!-- sm+: capped at the screen's height, so the tabs scroll rather than run off it -->
 		<div
-			bind:this={sidebarEl}
-			class="lg:w-96 fixed bottom-0 left-0 z-10 flex h-auto min-h-18 w-full shrink-0 flex-col space-y-4 sm:sticky sm:top-14 sm:h-[calc(100%-3.5rem)] sm:min-h-0 sm:w-24 sm:pt-8"
+			class="lg:w-96 fixed bottom-0 left-0 z-10 flex h-auto min-h-18 w-full shrink-0 flex-col space-y-4 sm:sticky sm:top-14 sm:max-h-[calc(100dvh-3.5rem)] sm:min-h-0 sm:w-24 sm:pt-8 sm:pb-4 compact:sm:space-y-2 compact:sm:pt-4 compact:sm:pb-2"
 		>
 			{#if loading}
 				{#if sidebarSkeleton}
@@ -536,14 +508,21 @@
 
 				<!-- Navigation tabs -->
 				<div
-					class="g2 no-scrollbar h-18 sm:h-full max-h-full w-full space-y-2 overflow-x-auto overflow-y-auto border-t border-gray-900/25 bg-white p-2 pb-1.5 shadow-lg sm:w-auto sm:rounded-e-xl sm:border-0 sm:border-none sm:pb-2 dark:border-white/25 dark:bg-zinc-800"
+					class="g2 no-scrollbar h-18 w-full overflow-x-auto overflow-y-auto border-t border-gray-900/25 bg-white p-2 pb-1.5 shadow-lg sm:flex sm:h-auto sm:min-h-0 sm:w-auto sm:flex-col sm:rounded-e-xl sm:border-0 sm:border-none sm:pb-2 dark:border-white/25 dark:bg-zinc-800"
 				>
+					<!-- The sm+ scroller sits inside the card, so its fade mask does not clip the card's shadow -->
+					<div
+						bind:this={tabScrollEl}
+						class="tab-scroll no-scrollbar sm:min-h-0 sm:overflow-y-auto sm:overscroll-contain"
+						class:fade-top={tabFadeTop}
+						class:fade-bottom={tabFadeBottom}
+					>
+					<div bind:this={tabTopSentinel} class="-mb-px h-px" aria-hidden="true"></div>
 					<!-- space-y only from sm up (vertical sidebar). On mobile the bar is horizontal —
 					     space-y would stagger tabs. Labels are in-flow under icons, so sm gap is modest. -->
 					<ul
-						bind:this={tabListEl}
 						aria-label={sectionsLabel}
-						class="flex items-start justify-evenly sm:space-y-3 lg:space-y-2 sm:inline sm:w-auto sm:justify-normal"
+						class="flex items-start justify-evenly sm:space-y-3 lg:space-y-2 compact:sm:space-y-1.5 compact:lg:space-y-1 sm:inline sm:w-auto sm:justify-normal"
 					>
 					<!-- Nav action buttons (hidden on mobile, shown on sm+ sidebar) -->
 					{#if navActions.length > 0}
@@ -572,24 +551,19 @@
 							</div>
 						{/if}
 
-					<!-- Section tabs (unimportant ones hidden on mobile, the ones with no room hidden from sm up) -->
-					{#each orderedSections as section, i (section.key)}
+					<!-- Section tabs (unimportant ones hidden on mobile) -->
+					{#each orderedSections as section (section.key)}
 						<li
-							data-section-tab
-							class="flex flex-col items-center me-2 sm:me-0 px-0 sm:px-[1.375rem] lgv:px-0 lg:px-0 {i >= tabsThatFit
-								? section.unimportant
-									? 'hidden'
-									: 'sm:hidden'
-								: section.unimportant
-									? 'hidden sm:list-item'
-									: ''}"
+							class="flex flex-col items-center me-2 sm:me-0 px-0 sm:px-[1.375rem] lgv:px-0 lg:px-0 {section.unimportant
+								? 'hidden sm:list-item'
+								: ''}"
 						>
 								<button
 									type="button"
 									onclick={() => selectSection(section.key)}
 									title={section.name}
 									aria-current={activeSection === section.key ? 'true' : undefined}
-									class="g2 lg:px-4 flex lg:w-full items-center justify-between rounded-lg border px-2 py-2 transition-colors gap-1 sm:justify-center lgv:justify-between lg:justify-between {tabsDisabled
+									class="g2 lg:px-4 flex lg:w-full items-center justify-between rounded-lg border px-2 py-2 compact:sm:py-1 transition-colors gap-1 sm:justify-center lgv:justify-between lg:justify-between {tabsDisabled
 										? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-700/50 opacity-50 dark:border-gray-800/25 dark:bg-gray-900 dark:text-gray-200/50'
 										: activeSection === section.key
 											? 'cursor-pointer border-azure-500 bg-gradient-to-bl from-azure-500 to-azure-700 text-white hover:bg-azure-900'
@@ -618,28 +592,6 @@
 							</li>
 						{/each}
 
-						<!-- "More" (sm and up): the tabs with no room in the sidebar -->
-						{#if moreSections.length > 0}
-							<li class="hidden sm:flex flex-col items-center sm:px-[1.375rem] lgv:px-0 lg:px-0">
-								<button
-									type="button"
-									onclick={() => (moreSectionsOpen = true)}
-									title={moreSectionActive?.name || overflowMenuTitle}
-									aria-haspopup="dialog"
-									class="g2 lg:px-4 flex lg:w-full items-center justify-center lg:justify-start gap-2 rounded-lg border px-2 py-2 transition-colors {tabsDisabled
-										? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-700/50 opacity-50 dark:border-gray-800/25 dark:bg-gray-900 dark:text-gray-200/50'
-										: moreSectionActive
-											? 'cursor-pointer border-azure-500 bg-gradient-to-bl from-azure-500 to-azure-700 text-white hover:bg-azure-900'
-											: 'cursor-pointer border-azure-100 bg-azure-50 text-azure-700 hover:bg-azure-100 dark:border-zinc-750 dark:bg-zinc-800 dark:text-azure-200 dark:hover:bg-zinc-750'}"
-									disabled={tabsDisabled}
-								>
-									<Ellipsis size={18} strokeWidth={2} />
-									<p class="lg:inline-block hidden font-medium truncate">{moreSectionActive?.name || overflowMenuTitle}</p>
-								</button>
-								<p class="lg:hidden mt-0.5 max-w-full text-center text-[10px] leading-tight truncate {tabsDisabled ? 'font-medium text-gray-400 dark:text-gray-500' : moreSectionActive ? 'font-bold text-azure-700 dark:text-azure-200' : 'font-medium text-gray-500 dark:text-gray-400'}">{moreSectionActive?.name || overflowMenuTitle}</p>
-							</li>
-						{/if}
-
 						<!-- Overflow / Ellipsis menu button (mobile only) -->
 						{#if hasOverflowItems}
 							<li class="flex flex-col items-center sm:hidden">
@@ -658,6 +610,8 @@
 							</li>
 						{/if}
 					</ul>
+					<div bind:this={tabBottomSentinel} class="-mt-px h-px" aria-hidden="true"></div>
+					</div>
 				</div>
 			{/if}
 		</div>
@@ -799,8 +753,8 @@
 	</div>
 </div>
 
-<!-- A section in the mobile overflow sheet or the "More" dialog; picking one closes it -->
-{#snippet sectionMenuItem(section, close, showShortcut)}
+<!-- A section in the mobile overflow sheet; picking one closes it -->
+{#snippet sectionMenuItem(section, close)}
 	<li>
 		<button
 			type="button"
@@ -818,12 +772,6 @@
 				<section.icon size={20} strokeWidth={2} />
 			{/if}
 			<span class="{activeSection === section.key ? 'font-semibold' : 'font-medium'}">{section.name}</span>
-			{#if showShortcut && hotkeysEnabled && section.shortcut}
-				<Kbd>Alt + Shift + {section.shortcut}</Kbd>
-			{/if}
-			{#if showShortcut && section.advanced}
-				<span class="ms-auto text-sm">{advancedText}</span>
-			{/if}
 		</button>
 	</li>
 {/snippet}
@@ -834,7 +782,7 @@
 		<ul class="space-y-1">
 			<!-- Unimportant section tabs -->
 			{#each unimportantSections as section (section.key)}
-				{@render sectionMenuItem(section, () => (overflowMenuOpen = false), false)}
+				{@render sectionMenuItem(section, () => (overflowMenuOpen = false))}
 			{/each}
 
 			<!-- Divider between sections and nav actions -->
@@ -858,16 +806,39 @@
 	</div>
 </Modal>
 
-<!-- "More" dialog (sm and up): only the sections; the sidebar already shows the nav actions -->
-<ModalIsland
-	isOpen={moreSectionsOpen}
-	onClose={() => (moreSectionsOpen = false)}
-	title={overflowMenuTitle}
-	icon={Ellipsis}
->
-	<ul class="space-y-1">
-		{#each moreSections as section (section.key)}
-			{@render sectionMenuItem(section, () => (moreSectionsOpen = false), true)}
-		{/each}
-	</ul>
-</ModalIsland>
+<style>
+	/* Same mask as Island's scrollBody fades, sm+ only: the phone bar does not scroll vertically */
+	@property --tab-fade-top {
+		syntax: '<length>';
+		inherits: false;
+		initial-value: 0px;
+	}
+	@property --tab-fade-bottom {
+		syntax: '<length>';
+		inherits: false;
+		initial-value: 0px;
+	}
+
+	@media (min-width: 40rem) {
+		.tab-scroll {
+			--tab-fade-top: 0px;
+			--tab-fade-bottom: 0px;
+			mask-image: linear-gradient(
+				to bottom,
+				transparent,
+				#000 var(--tab-fade-top),
+				#000 calc(100% - var(--tab-fade-bottom)),
+				transparent
+			);
+			transition:
+				--tab-fade-top 150ms ease-out,
+				--tab-fade-bottom 150ms ease-out;
+		}
+		.tab-scroll.fade-top {
+			--tab-fade-top: 1.5rem;
+		}
+		.tab-scroll.fade-bottom {
+			--tab-fade-bottom: 2rem;
+		}
+	}
+</style>
