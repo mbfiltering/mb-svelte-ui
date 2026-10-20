@@ -818,6 +818,7 @@ Dropdown group of navigation actions. The trigger matches `NavButton` styling an
 - The trigger uses the same visual language and responsive label behavior as `NavButton`.
 - Each dropdown item can be a link or button, based on the same `href` and `onclick` rules as `NavButton`.
 - The dropdown closes on item selection, outside click, or `Escape`.
+- `getNavMenuItemClasses({ color, disabled, className })` (exported from `@mbsmart/ui/atoms`) returns the classes of a dropdown item, for a full-width labelled row button outside the dropdown.
 
 Segmented button selector for choosing one option from a list.
 
