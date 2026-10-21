@@ -58,6 +58,7 @@
 	 * @prop {string} doneLabel The summary's button, already translated.
 	 * @prop {() => void} onDone
 	 * @prop {1 | 2} [headingLevel] Of the progress phrase; step titles sit one below.
+	 * @prop {boolean} [showPhrase] The progress phrase over the bar; off in the technician popup.
 	 * @prop {boolean} [closeHint] Say on the summary that the tab can be closed.
 	 * @prop {boolean} [showCopy] Offer "Copy link" under each QR code.
 	 * @prop {'customer' | 'technician'} [audience] Who reads it. `technician`
@@ -92,6 +93,7 @@
 		doneLabel,
 		onDone,
 		headingLevel = 1,
+		showPhrase = true,
 		closeHint = false,
 		showCopy = false,
 		framed = true,
@@ -295,7 +297,7 @@
 				done={stepStates.map((state) => state.done)}
 				{currentIndex}
 				completed={completedCount}
-				{phrase}
+				phrase={showPhrase ? phrase : ''}
 				label={barLabel}
 				stepsLabel={$t('DeviceInstall.steps_label')}
 				onselect={goTo}

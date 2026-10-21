@@ -20,7 +20,7 @@
 	 * @prop {boolean[]} done One per step.
 	 * @prop {number} currentIndex Page on screen; `titles.length` is the summary.
 	 * @prop {number} completed The unbroken run of finished steps from the first.
-	 * @prop {string} phrase Already translated. The heading.
+	 * @prop {string} [phrase] Already translated. The heading; none when empty.
 	 * @prop {string} label Already translated. The bar's accessible name.
 	 * @prop {string} stepsLabel Already translated. The step list's accessible name.
 	 * @prop {(index: number) => void} onselect
@@ -31,7 +31,7 @@
 		done,
 		currentIndex,
 		completed,
-		phrase,
+		phrase = '',
 		label,
 		stepsLabel,
 		onselect,
@@ -63,13 +63,15 @@
 </script>
 
 <div class="space-y-4">
-	<svelte:element
-		this={headingTag}
-		class="text-center font-bold text-balance text-azure-600 dark:text-azure-400 {headingSize} {TINT}"
-		style="color: color-mix(in oklab, var(--tint-from), var(--tint-to) {donePercent}%)"
-	>
-		{phrase}
-	</svelte:element>
+	{#if phrase}
+		<svelte:element
+			this={headingTag}
+			class="text-center font-bold text-balance text-azure-600 dark:text-azure-400 {headingSize} {TINT}"
+			style="color: color-mix(in oklab, var(--tint-from), var(--tint-to) {donePercent}%)"
+		>
+			{phrase}
+		</svelte:element>
+	{/if}
 
 	<!-- Inset by half a circle, so neither end hangs outside the column. -->
 	<div class="relative h-7">
