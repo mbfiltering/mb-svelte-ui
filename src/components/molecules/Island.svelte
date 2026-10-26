@@ -119,7 +119,7 @@
 					{@const IconComponent = icon}
 					<IconComponent size={20} strokeWidth={2} />
 				{/if}
-				<h3 class="font-medium sm:text-lg compact:sm:text-base">{title}</h3>
+				<h3 class="font-medium wrap-anywhere sm:text-lg compact:sm:text-base">{title}</h3>
 			</button>
 
 			{#if actions}
@@ -155,7 +155,7 @@
 					{@const IconComponent = icon}
 					<IconComponent size={20} strokeWidth={2} />
 				{/if}
-				<h3 class="min-w-0 flex-1 font-medium sm:text-lg compact:sm:text-base">{title}</h3>
+				<h3 class="min-w-0 flex-1 font-medium wrap-anywhere sm:text-lg compact:sm:text-base">{title}</h3>
 				{#if actions}
 					<div class="flex shrink-0 items-center gap-1">{@render actions()}</div>
 				{/if}
