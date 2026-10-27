@@ -2478,6 +2478,8 @@ Each link is `{ name, url, icon, description, newTab? }`. Links open in a new
 tab. A link with `newTab: false` (a page of the host app itself) opens in place
 and gets a new-tab button (`ExternalLink` icon) at its end instead; the two are
 sibling links, never one inside the other.
+A link with `onclick` instead of `url` is a button (to open a popup, say) and
+has no new-tab button.
 
 **Usage:**
 
@@ -2875,6 +2877,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 | `productName`     | string     | `''`           | Product name in the footer. Empty hides the footer entirely        |
 | `brandIcon`       | string     | `mbsmart-logo` | Footer icon name for `SvgIcon`                                     |
 | `versionString`   | string     | `''`           | Version, appended to the product name after a `·`                  |
+| `footerAction`    | object     | -              | `{ label, onclick }`: a faded text button after the name and version, e.g. "Request a feature" |
 | `loadingProgress` | number     | `0`            | Loading bar progress percentage (0-100)                            |
 | `isFullyLoaded`   | boolean    | `true`         | When true, hides the loading bar                                   |
 | `className`       | string     | `''`           | Additional CSS classes for wrapper                                 |

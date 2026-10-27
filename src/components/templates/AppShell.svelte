@@ -15,7 +15,7 @@
 	 * - Sticky header: account chip (avatar + name), app content, nav
 	 * - Optional loading progress bar
 	 * - Main content area
-	 * - Faded brand footer with the product name and version
+	 * - Faded brand footer with the product name, version and an optional action
 	 */
 	let {
 		// Account chip (header, start side)
@@ -37,6 +37,8 @@
 		productName = '',
 		brandIcon = 'mbsmart-logo',
 		versionString = '',
+		// Faded text button after the name, e.g. `{ label: 'Request a feature', onclick }`
+		footerAction = undefined,
 
 		// Loading bar props
 		loadingProgress = 0,
@@ -140,6 +142,16 @@
 			<SvgIcon name={brandIcon} size="w-4 h-4" className="shrink-0" />
 			<p class="text-xs font-medium">
 				{productName}{versionString ? ` · ${versionString}` : ''}
+				{#if footerAction}
+					·
+					<button
+						type="button"
+						onclick={footerAction.onclick}
+						class="cursor-pointer underline-offset-2 transition-colors hover:text-gray-900/70 hover:underline dark:hover:text-gray-50/70"
+					>
+						{footerAction.label}
+					</button>
+				{/if}
 			</p>
 		</footer>
 	{/if}
