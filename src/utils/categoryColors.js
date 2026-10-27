@@ -52,8 +52,12 @@ export const labelToColorKey = {
 	// images and video), so it sits with Social Media rather than plain Chats.
 	'ai chats': 'red',
 	aichats: 'red',
+	'ai images': 'red',
+	aiimages: 'red',
 	mature: 'red',
 	proxies: 'red',
+	proxy: 'red',
+	advertisement: 'red',
 	entertainment: 'red',
 	prohibited: 'red',
 	'ad services': 'red',
