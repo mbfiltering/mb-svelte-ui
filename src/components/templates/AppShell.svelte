@@ -147,7 +147,7 @@
 					<button
 						type="button"
 						onclick={footerAction.onclick}
-						class="cursor-pointer underline-offset-2 transition-colors hover:text-gray-900/70 hover:underline dark:hover:text-gray-50/70"
+						class="cursor-pointer text-xs underline-offset-2 transition-colors hover:text-gray-900/70 hover:underline dark:hover:text-gray-50/70"
 					>
 						{footerAction.label}
 					</button>
