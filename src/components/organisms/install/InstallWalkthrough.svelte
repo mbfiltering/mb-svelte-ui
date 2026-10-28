@@ -29,15 +29,12 @@
 	 * ticking it adds the Screen Time step after the Safari extensions, which is where the
 	 * Adult or Child question is asked.
 	 *
-	 * **The pager.** One step on screen, opened on the first unfinished one. No Next
-	 * until the step on screen is done; Previous is always open. The end of the
-	 * control row holds "I've done this" while a step the reader confirms is
-	 * unfinished and Next once it is, so the press that confirms and the press that
-	 * pages land under the same finger.
-	 * A finished step shows a small mark between them: a button to take a tick back,
-	 * or plain text when the device proved it (un-ticking would re-tick on the next
-	 * poll). The summary is the last page. Turning a page moves focus onto it.
-	 * The circles in the bar reach any step, finished or not.
+	 * **The pager** is `Wizard`, shared with any other setup flow: one step on
+	 * screen, opened on the first unfinished one, no Next until it is done, a
+	 * small mark on a finished step (a button to take a tick back, or plain text
+	 * when the device proved it: un-ticking would re-tick on the next poll), and
+	 * the summary as the last page. This file is what is particular to iOS: the
+	 * steps, the copy, watching the device and the step panels.
 	 *
 	 * @typedef {object} InstallWalkthroughApi How this portal reaches core.
 	 * @property {() => Promise<Record<string, any> | null>} getStatus
@@ -70,18 +67,16 @@
 	 * @prop {boolean} [supervised] The device is already supervised (the device
 	 *   portal): no supervise line, and no prerequisites.
 	 */
-	import { onMount, tick } from 'svelte';
-	import { BadgeCheck, Check, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { onMount } from 'svelte';
+	import { BadgeCheck } from '@lucide/svelte';
 	import { t } from '../../../utils/i18n/i18n.js';
 	import { language } from '../../../utils/i18n/languageStore.js';
 	import { loadInstallTranslations } from '../../../utils/install/i18n.js';
 	import { installStepsFor } from '../../../utils/install/steps.js';
 	import { installProgressPhraseKey } from '../../../utils/install/progress.js';
-	import CircleButton from '../../atoms/CircleButton.svelte';
 	import ControlButton from '../../atoms/ControlButton.svelte';
-	import Island from '../../molecules/Island.svelte';
 	import Skeleton from '../../atoms/Skeleton.svelte';
-	import InstallProgressBar from './InstallProgressBar.svelte';
+	import Wizard from '../wizard/Wizard.svelte';
 	import InstallStepPanel from './InstallStepPanel.svelte';
 
 	let {
@@ -161,31 +156,28 @@
 	const isStepDone = (step) =>
 		step.confirm === 'auto' ? isProven(step) : isProven(step) || attested.includes(step.id);
 
-	const stepStates = $derived(
-		steps.map((step) => ({ confirmedByDevice: isProven(step), done: isStepDone(step) }))
+	/** The steps as the pager sees them. */
+	const wizardSteps = $derived(
+		steps.map((step) => ({
+			id: step.id,
+			title: $t(step.titleKey),
+			done: isStepDone(step),
+			confirmedByDevice: isProven(step),
+			attest: step.confirm === 'attest',
+			confirmLabel: step.confirmLabelKey ? $t(step.confirmLabelKey) : undefined,
+			confirmedLabel: step.confirmedKey ? $t(step.confirmedKey) : undefined
+		}))
 	);
-	const firstUnfinished = $derived(stepStates.findIndex((state) => !state.done));
-	const allDone = $derived(steps.length > 0 && firstUnfinished === -1);
-	const completedCount = $derived(firstUnfinished === -1 ? steps.length : firstUnfinished);
+	const allDone = $derived(steps.length > 0 && wizardSteps.every((step) => step.done));
 
-	const summaryIndex = $derived(steps.length);
+	/** The page on screen, kept by the pager. */
 	let viewIndex = $state(-1);
-	let openedFor = $state('');
-	$effect(() => {
-		if (steps.length > 0 && openedFor !== deviceId) {
-			viewIndex = firstUnfinished === -1 ? summaryIndex : firstUnfinished;
-			openedFor = deviceId;
-		}
-	});
-
-	const currentIndex = $derived(Math.min(Math.max(viewIndex, 0), summaryIndex));
-	const onSummary = $derived(steps.length > 0 && currentIndex === summaryIndex);
-	const currentStep = $derived(steps[currentIndex]);
-	const currentState = $derived(stepStates[currentIndex]);
+	const currentStep = $derived(steps[Math.max(viewIndex, 0)]);
+	const currentDone = $derived(!!wizardSteps[Math.max(viewIndex, 0)]?.done);
 
 	/** Is the step on screen waiting on the device right now? Then ask often. */
 	const waitingOnDevice = $derived(
-		!!currentStep && !currentState?.done && currentStep.confirm === 'auto'
+		!!currentStep && !currentDone && currentStep.confirm === 'auto'
 	);
 
 	const wantsProfile = $derived(
@@ -230,52 +222,27 @@
 	const awaitingAnswer = $derived(!!currentStep?.question && !accountKind);
 	const canConfirm = $derived(!awaitingAnswer && !actionPending);
 
-	let pageEl = $state(/** @type {HTMLElement | null} */ (null));
+	const labels = $derived({
+		back: $t('DeviceInstall.back'),
+		next: $t('DeviceInstall.next'),
+		finish: $t('DeviceInstall.finish_up'),
+		markDone: $t('DeviceInstall.mark_done'),
+		markedDone: $t('DeviceInstall.marked_done'),
+		undo: $t('DeviceInstall.undo'),
+		detected: $t('DeviceInstall.detected'),
+		steps: $t('DeviceInstall.steps_label'),
+		bar: (/** @type {import('../wizard/Wizard.svelte').WizardProgress} */ p) =>
+			p.onSummary
+				? $t('DeviceInstall.bar_label_summary', { total: p.total })
+				: $t('DeviceInstall.bar_label', {
+						percent: Math.round((p.completed / p.total) * 100),
+						current: p.current + 1,
+						total: p.total
+					})
+	});
 
-	/** Only a gesture moves focus; arriving on the page does not. */
-	async function focusPage() {
-		await tick();
-		pageEl?.focus();
-	}
-
-	/** @param {number} index */
-	function goTo(index) {
-		viewIndex = Math.min(Math.max(index, 0), summaryIndex);
-		focusPage();
-	}
-
-	/**
-	 * Finishing a step lands on the next unfinished one, which can be several
-	 * along when the device already proved the steps in between. Forward first,
-	 * then the earliest gap, then the summary.
-	 *
-	 * @param {string} stepId
-	 */
-	function handleAttest(stepId) {
-		if (!attested.includes(stepId)) attested = [...attested, stepId];
-		const states = steps.map((step) => ({ done: isStepDone(step) }));
-		const ahead = states.findIndex((state, index) => index >= currentIndex && !state.done);
-		const gap = states.findIndex((state) => !state.done);
-		goTo(ahead !== -1 ? ahead : gap !== -1 ? gap : summaryIndex);
-	}
-
-	/** @param {string} stepId */
-	function handleUndo(stepId) {
-		attested = attested.filter((id) => id !== stepId);
-		focusPage();
-	}
-
-
-	const phrase = $derived($t(installProgressPhraseKey(completedCount, steps.length)));
-	const barLabel = $derived(
-		onSummary
-			? $t('DeviceInstall.bar_label_summary', { total: steps.length })
-			: $t('DeviceInstall.bar_label', {
-					percent: Math.round((completedCount / steps.length) * 100),
-					current: currentIndex + 1,
-					total: steps.length
-				})
-	);
+	/** @param {import('../wizard/Wizard.svelte').WizardProgress} p */
+	const phrase = (p) => $t(installProgressPhraseKey(p.completed, p.total));
 
 	/** Turns the filter on, then looks at once, so the step ticks without waiting. */
 	async function turnFilterOn() {
@@ -291,139 +258,62 @@
 	{#if !ready || steps.length === 0}
 		<Skeleton rows={['h-8', 'h-6', 'h-24']} />
 	{:else}
-		<div class="space-y-4">
-			<InstallProgressBar
-				titles={steps.map((step) => $t(step.titleKey))}
-				done={stepStates.map((state) => state.done)}
-				{currentIndex}
-				completed={completedCount}
-				phrase={showPhrase ? phrase : ''}
-				label={barLabel}
-				stepsLabel={$t('DeviceInstall.steps_label')}
-				onselect={goTo}
-				{headingLevel}
-			/>
-
-			{#snippet frame(/** @type {import('svelte').Snippet} */ content)}
-				{#if framed}
-					<Island collapsible={false}>{@render content()}</Island>
-				{:else}
-					<div class="border-y border-neutral-100 py-4 dark:border-zinc-750">
-						{@render content()}
-					</div>
-				{/if}
+		<Wizard
+			steps={wizardSteps}
+			{labels}
+			phrase={showPhrase ? phrase : undefined}
+			startKey={deviceId}
+			bind:index={viewIndex}
+			{canConfirm}
+			onattest={(id) => {
+				if (!attested.includes(id)) attested = [...attested, id];
+			}}
+			onundo={(id) => (attested = attested.filter((other) => other !== id))}
+			{headingLevel}
+			{framed}
+		>
+			{#snippet step(_, index)}
+				<InstallStepPanel
+					step={steps[index]}
+					done={wizardSteps[index].done}
+					{deviceId}
+					{devicePin}
+					{accountKind}
+					onChooseAccount={(/** @type {'child' | 'adult'} */ kind) => (accountKind = kind)}
+					{screenTime}
+					onScreenTime={(/** @type {boolean} */ on) => (screenTime = on)}
+					onActionPending={(/** @type {boolean} */ pending) => (actionPending = pending)}
+					getLink={api.getLink}
+					{showCopy}
+					{handover}
+					turnFilterOn={api.turnFilterOn ? turnFilterOn : undefined}
+					headingLevel={headingLevel + 1}
+				/>
 			{/snippet}
 
-			{#snippet page()}
-				<div bind:this={pageEl} tabindex="-1" class="focus:outline-none">
-					{#if onSummary}
-						<div class="space-y-5 py-4 text-center">
-							<BadgeCheck
-								size={76}
-								strokeWidth={1.5}
-								class="mx-auto text-green-alt-600 dark:text-green-alt-300"
-								aria-hidden="true"
-							/>
-							<div class="space-y-2">
-								<p class="text-sm text-gray-600 dark:text-gray-300">
-									{$t(
-										protectedNow
-											? 'DeviceInstall.all_done_body'
-											: 'DeviceInstall.all_done_unconfirmed'
-									)}
-								</p>
-								{#if closeHint}
-									<p class="text-base font-semibold text-green-alt-700 dark:text-green-alt-300">
-										{$t('DeviceInstall.all_done_close')}
-									</p>
-								{/if}
-							</div>
-							<ControlButton color="azure" onclick={onDone}>{doneLabel}</ControlButton>
-						</div>
-					{:else}
-						{#key currentStep.id}
-							<InstallStepPanel
-								step={currentStep}
-								done={currentState.done}
-								{deviceId}
-								{devicePin}
-								{accountKind}
-								onChooseAccount={(/** @type {'child' | 'adult'} */ kind) => (accountKind = kind)}
-								{screenTime}
-								onScreenTime={(/** @type {boolean} */ on) => (screenTime = on)}
-								onActionPending={(/** @type {boolean} */ pending) => (actionPending = pending)}
-								getLink={api.getLink}
-								{showCopy}
-								{handover}
-								turnFilterOn={api.turnFilterOn ? turnFilterOn : undefined}
-								headingLevel={headingLevel + 1}
-							/>
-						{/key}
-					{/if}
-				</div>
-			{/snippet}
-
-			{@render frame(page)}
-
-			<!-- Back, the done mark, and the one control that moves on. -->
-			<div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-				<div class="justify-self-start">
-					{#if currentIndex > 0}
-						<CircleButton
-							icon={ChevronLeft}
-							iconClassName="rtl:-scale-x-100"
-							label={$t('DeviceInstall.back')}
-							onclick={() => goTo(currentIndex - 1)}
-						/>
-					{/if}
-				</div>
-
-				<div class="min-w-0 justify-self-center">
-					{#if !onSummary && currentState?.done}
-						{#if currentState.confirmedByDevice}
-							<p
-								class="inline-flex items-center gap-1.5 text-center text-sm font-medium text-green-alt-600 dark:text-green-alt-300"
-							>
-								<Check size={16} strokeWidth={2} class="shrink-0" aria-hidden="true" />
-								<span>{$t(currentStep.confirmedKey ?? 'DeviceInstall.detected')}</span>
+			{#snippet summary()}
+				<div class="space-y-5 py-4 text-center">
+					<BadgeCheck
+						size={76}
+						strokeWidth={1.5}
+						class="mx-auto text-green-alt-600 dark:text-green-alt-300"
+						aria-hidden="true"
+					/>
+					<div class="space-y-2">
+						<p class="text-sm text-gray-600 dark:text-gray-300">
+							{$t(
+								protectedNow ? 'DeviceInstall.all_done_body' : 'DeviceInstall.all_done_unconfirmed'
+							)}
+						</p>
+						{#if closeHint}
+							<p class="text-base font-semibold text-green-alt-700 dark:text-green-alt-300">
+								{$t('DeviceInstall.all_done_close')}
 							</p>
-						{:else}
-							<button
-								type="button"
-								class="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-1 text-center text-sm font-medium text-green-alt-600 hover:bg-green-alt-50 dark:text-green-alt-300 dark:hover:bg-green-alt-950/40"
-								title={$t('DeviceInstall.undo')}
-								aria-pressed="true"
-								onclick={() => handleUndo(currentStep.id)}
-							>
-								<Check size={16} strokeWidth={2} class="shrink-0" aria-hidden="true" />
-								<span>{$t('DeviceInstall.marked_done')}</span>
-							</button>
 						{/if}
-					{/if}
+					</div>
+					<ControlButton color="azure" onclick={onDone}>{doneLabel}</ControlButton>
 				</div>
-
-				<div class="justify-self-end">
-					{#if onSummary}
-						<!-- Nothing left to confirm and nowhere further to page. -->
-					{:else if currentState.done}
-						<CircleButton
-							icon={ChevronRight}
-							iconClassName="rtl:-scale-x-100"
-							label={currentIndex === summaryIndex - 1
-								? $t('DeviceInstall.finish_up')
-								: $t('DeviceInstall.next')}
-							className="flex-row-reverse"
-							onclick={() => goTo(currentIndex + 1)}
-						/>
-					{:else if canConfirm && currentStep.confirm === 'attest'}
-						<CircleButton
-							color="azure"
-							label={$t(currentStep.confirmLabelKey ?? 'DeviceInstall.mark_done')}
-							onclick={() => handleAttest(currentStep.id)}
-						/>
-					{/if}
-				</div>
-			</div>
-		</div>
+			{/snippet}
+		</Wizard>
 	{/if}
 </div>

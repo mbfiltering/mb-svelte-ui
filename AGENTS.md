@@ -149,7 +149,8 @@ src/
 │   ├── atoms/            # Basic building blocks (Button, Badge, Input, NavDropdown, etc.)
 │   ├── molecules/        # Composite components (Grid, Island, NamedControl, PageHeader, Tabs)
 │   ├── organisms/        # Complex components (Modal, ModalIsland, SearchableList, ToastContainer)
-│   │   └── install/      # The iOS install walkthrough (InstallWalkthrough and its parts)
+│   │   ├── install/      # The iOS install walkthrough (InstallWalkthrough and its parts)
+│   │   └── wizard/       # Wizard: the pager any setup flow shares (the walkthrough is built on it)
 │   └── templates/        # Page-level layouts (AppShell, SectionedPage)
 ├── fonts/                # Rubik (OFL) — WOFF2 subsets, one family for every
 │                         #   script, declared in styles.css.
@@ -165,7 +166,7 @@ src/
 |-------------|--------------------------------------|-----------------------------------|
 | **Atoms**   | Single-purpose, primitive UI         | AnimatedLogo, Avatar, Badge, CheckBox, FieldError, NavDropdown, QrCode, RichText, SaveBadge, Spinner, TextInput |
 | **Molecules** | Composed of atoms, reusable groups | Field, Grid, HeaderNav, Island, MultiInput, PageHeader |
-| **Organisms** | Complex, self-contained features   | InstallWalkthrough, Modal, ModalIsland, SearchableList, TermsContent, ToastContainer |
+| **Organisms** | Complex, self-contained features   | InstallWalkthrough, Wizard, Modal, ModalIsland, SearchableList, TermsContent, ToastContainer |
 | **Templates** | Page layouts and shells            | AppShell, SectionedPage           |
 
 ### Magic search and lists

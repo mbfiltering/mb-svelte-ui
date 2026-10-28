@@ -1,12 +1,12 @@
 <script>
 	/**
-	 * The walkthrough's one bar: a phrase over a track of numbered steps.
+	 * The wizard's one bar: a phrase over a track of numbered steps.
 	 *
 	 * **How far you have got** is the phrase and the fill: "Almost there", not
 	 * "60%". The percentage survives in `aria-valuenow` and the label, which is the
 	 * only position a screen reader gets from a bar.
 	 * **The steps** sit on the track as small numbered circles, one per step of the
-	 * list the reader is on, so ticking Screen Time redraws them. A finished step is
+	 * list the reader is on, so a list that changes (the iOS walkthrough's Screen Time box) redraws them. A finished step is
 	 * filled, the step on screen is ringed in its own colour on the ramp, and every circle is a button that goes
 	 * straight to its step (the owner, 2026-10-07), ahead of the run as well as back.
 	 *

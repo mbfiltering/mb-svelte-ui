@@ -66,6 +66,7 @@
    - [SearchableList](#searchablelist)
    - [TermsContent](#termscontent)
    - [ToastContainer](#toastcontainer)
+   - [Wizard](#wizard)
 5. [Templates (Page Layouts)](#templates)
    - [AppShell](#appshell)
    - [ErrorPage](#errorpage)
@@ -2182,7 +2183,7 @@ Complex components with significant functionality.
 
 ### InstallWalkthrough
 
-The iOS v2 install walkthrough, one step at a time: a progress bar whose phrase is
+The iOS v2 install walkthrough, one step at a time, built on [Wizard](#wizard): a progress bar whose phrase is
 a heading and whose track carries a numbered circle per step (filled when done,
 ringed when on screen, each a button to that step; the list, and so the circles,
 follow the Screen Time choice; the ring takes the step's own colour), the step on screen, and a control row (Previous, a done mark, "I've done
@@ -2255,6 +2256,55 @@ supervise line on the app step.
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
 | `handover` | `'auto' | 'both' | 'button'` | `'auto'` | How a link reaches the phone; see above |
 | `supervised` | `boolean` | `false` | The device is supervised already: no prerequisites or supervise line |
+
+### Wizard
+
+The pager under [InstallWalkthrough](#installwalkthrough), for any other setup flow
+that should look and behave the same (the technician portal's Tzohar setup uses it):
+the progress bar with a numbered circle per step, the step on screen in a frame, a
+summary page after the last step, and the control row (Previous, the done mark, the
+step's button or Next). It knows nothing about the steps: the host says what each is
+called and whether it is done, and draws its body and the summary.
+
+A step something else proves (the device reports in) is done when the host says so
+and has no button. A step with `attest` has a button; pressing it calls `onattest`,
+and the host marks it done. Only a tick can be taken back (`onundo`), so
+`confirmedByDevice` says which made a finished step done. It opens on the first
+unfinished step, and again when `startKey` changes; finishing a step lands on the
+next unfinished one; turning a page moves focus onto it.
+
+```svelte
+<Wizard
+	steps={[
+		{ id: 'on', title: 'Turn on', done: !!account, confirmedByDevice: !!account },
+		{ id: 'read', title: 'Read this', done: read, attest: true }
+	]}
+	labels={{ back, next, finish, markDone, markedDone, undo, detected, steps: stepsLabel, bar: (p) => `${p.completed} of ${p.total}` }}
+	onattest={() => (read = true)}
+	onundo={() => (read = false)}
+	headingLevel={2}
+	framed={false}
+>
+	{#snippet step(s)}…{/snippet}
+	{#snippet summary()}…{/snippet}
+</Wizard>
+```
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `steps` | `{ id, title, done, confirmedByDevice?, attest?, confirmLabel?, confirmedLabel? }[]` | | Titles and labels already translated |
+| `labels` | `{ back, next, finish, markDone, markedDone, undo, detected, steps, bar(progress) }` | | The controls' words, translated; `bar` names the progress bar |
+| `step` | `Snippet<[step, index]>` | | The body of the step on screen |
+| `summary` | `Snippet` | | The last page |
+| `phrase` | `(progress) => string` | | The heading over the bar; none when omitted |
+| `startKey` | `string` | `''` | Reopen on the first unfinished step when it changes |
+| `index` | `number` (bindable) | `-1` | The page on screen; `steps.length` is the summary |
+| `canConfirm` | `boolean` | `true` | Whether the step on screen may be confirmed yet |
+| `onattest`, `onundo` | `(id) => void` | | A step's button, and taking its tick back |
+| `headingLevel` | `1 | 2` | `1` | Of the phrase |
+| `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
+
+`progress` is `{ completed, total, current, onSummary }`.
 
 ---
 
