@@ -2227,7 +2227,7 @@ device page's); the device still confirms the step. `supervised` is for a device
 that is supervised already (the device portal's are): no prerequisites, and no
 supervise line on the app step. `mdm` is for a device with
 `ios_settings_mdm_config_mode_all_restrictions` on: app (confirming it calls
-`api.enableConfigMode`), profile, the app linking by itself, extensions, filter.
+`api.enableConfigMode`), profile, the app linking by itself, filter.
 Its stamps count only when they differ from the first ones read.
 
 ```svelte

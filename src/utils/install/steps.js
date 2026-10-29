@@ -391,7 +391,7 @@ const appLinkedSinceOpen = (/** @type {InstallStepEvidence} */ { status, before,
 
 /**
  * The MDM path (`ios_settings_mdm_config_mode_all_restrictions`, MHomsany, 2026-10-29): MDM holds
- * the restrictions and the profile links the app, so no link, trust or Screen Time step.
+ * the restrictions and the profile links the app, so no link, extension, trust or Screen Time step.
  * @type {InstallStep[]}
  */
 const MDM_STEPS = [
@@ -418,7 +418,6 @@ const MDM_STEPS = [
 		confirmedKey: 'DeviceInstall.step_link_done',
 		isDone: appLinkedSinceOpen
 	},
-	EXTENSION_STEP,
 	FILTER_ON_STEP
 ];
 
