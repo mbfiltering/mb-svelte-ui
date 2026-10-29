@@ -69,6 +69,7 @@ export const translations = {
 		step_link_body: "Esto establece la comunicación entre MB Smart y el dispositivo.",
 		step_profile_title: "Instale el perfil del filtro",
 		step_profile_body: "El perfil es lo que mantiene MB Smart en su sitio.",
+		step_linked_by_profile_body: "El perfil vincula la app con MB Smart por sí solo. Aquí no hay nada que hacer: esta página se actualiza en cuanto lo haga.",
 		account_question: "¿Con qué tipo de cuenta de Apple inicia sesión este dispositivo?",
 		account_adult_label: "Adulto",
 		account_child_label: "Niño o adolescente",

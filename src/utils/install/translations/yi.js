@@ -69,6 +69,7 @@ export const translations = {
 		step_link_body: "דאָס שטעלט אײַן קאָמוניקאַציע צװישן MB Smart און דעם מכשיר.",
 		step_profile_title: "אינסטאַלירט דעם פֿילטער-פּראָפֿיל",
 		step_profile_body: "דער פּראָפֿיל האַלט MB Smart אויפֿן אָרט.",
+		step_linked_by_profile_body: "דער פּראָפֿיל פֿאַרבינדט די אַפּ מיט MB Smart אַלײן. דאָ איז גאָרנישט צו טאָן: דער בלאַט דערהײַנטיקט זיך װי נאָר דאָס געשעט.",
 		account_question: "מיט װאָס פֿאַר אַ Apple קאָנטע איז דער דאָזיקער מכשיר אײַנגעלאָגט?",
 		account_adult_label: "דערװאַקסענער",
 		account_child_label: "קינד אָדער טינײַדזשער",

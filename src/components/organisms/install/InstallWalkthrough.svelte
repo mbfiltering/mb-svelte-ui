@@ -46,6 +46,8 @@
 	 * @property {() => Promise<void>} [turnFilterOn] Only where the portal can turn
 	 *   the filter on itself (the device portal, the technician portal). The last
 	 *   step then offers a button for it instead of sending the reader elsewhere.
+	 * @property {() => Promise<void>} [enableConfigMode] Turns v2 config mode on;
+	 *   called when a `configModeOnConfirm` step is confirmed.
 	 *
 	 * @prop {string} deviceId
 	 * @prop {string} deviceType
@@ -66,6 +68,7 @@
 	 *   device portal); see `links.js`.
 	 * @prop {boolean} [supervised] The device is already supervised (the device
 	 *   portal): no supervise line, and no prerequisites.
+	 * @prop {boolean} [mdm] `ios_settings_mdm_config_mode_all_restrictions` is on: the MDM path.
 	 */
 	import { onMount } from 'svelte';
 	import { BadgeCheck } from '@lucide/svelte';
@@ -94,7 +97,8 @@
 		framed = true,
 		audience = 'customer',
 		handover = 'auto',
-		supervised = false
+		supervised = false,
+		mdm = false
 	} = $props();
 
 	const FAST_POLL_MS = 5_000;
@@ -114,6 +118,8 @@
 	let profile = $state(/** @type {any} */ (null));
 	/** When the evidence was last read: a stamp proves a step only while recent. */
 	let readAt = $state(Date.now());
+	/** The first status and profile read, which the MDM path's stamps must differ from. */
+	let before = $state(/** @type {{ status?: any, profile?: any }} */ ({}));
 
 	let attested = $state(/** @type {string[]} */ ([]));
 	/**
@@ -131,6 +137,7 @@
 			proven = [];
 			accountKind = null;
 			screenTime = false;
+			before = {};
 			answersFor = deviceId;
 		}
 	});
@@ -139,10 +146,11 @@
 		handover,
 		filterHere: !!api.turnFilterOn,
 		supervised,
-		screenTime
+		screenTime,
+		mdm
 	});
 	const steps = $derived(installStepsFor(deviceType, audience, stepOptions));
-	const evidence = $derived({ status, profile, now: readAt });
+	const evidence = $derived({ status, profile, before, now: readAt });
 
 	$effect(() => {
 		const fresh = steps.filter((step) => step.isDone?.(evidence) && !proven.includes(step.id));
@@ -191,7 +199,12 @@
 		try {
 			const next = await api.getStatus().catch(() => null);
 			if (next) status = next;
-			if (wantsProfile) profile = (await api.getProfileStatus().catch(() => null)) ?? profile;
+			if (next && !('status' in before)) before = { ...before, status: next };
+			if (wantsProfile) {
+				const read = await api.getProfileStatus().catch(() => null);
+				if (read) profile = read;
+				if (read && !('profile' in before)) before = { ...before, profile: read };
+			}
 			readAt = Date.now();
 		} finally {
 			refreshing = false;
@@ -266,6 +279,9 @@
 			bind:index={viewIndex}
 			{canConfirm}
 			onattest={(id) => {
+				// A failure resurfaces on the profile link, which turns it on again first
+				if (steps.find((step) => step.id === id)?.configModeOnConfirm)
+					api.enableConfigMode?.().catch(() => {});
 				if (!attested.includes(id)) attested = [...attested, id];
 			}}
 			onundo={(id) => (attested = attested.filter((other) => other !== id))}

@@ -2225,7 +2225,10 @@ step offers **Turn on the filter** instead of the way to the device portal and
 its PIN (for `technician`, a Play button named **Enable protection**, like the
 device page's); the device still confirms the step. `supervised` is for a device
 that is supervised already (the device portal's are): no prerequisites, and no
-supervise line on the app step.
+supervise line on the app step. `mdm` is for a device with
+`ios_settings_mdm_config_mode_all_restrictions` on: app (confirming it calls
+`api.enableConfigMode`), profile, the app linking by itself, extensions, filter.
+Its stamps count only when they differ from the first ones read.
 
 ```svelte
 <script>
@@ -2246,7 +2249,7 @@ supervise line on the app step.
 | `deviceId`, `deviceType` | `string` | | The device. Only Apple types have steps |
 | `devicePin` | `string` | `''` | Named on the filter step |
 | `initialStatus` | `object | null` | `null` | First paint, before the first poll |
-| `api` | `{ getStatus, getProfileStatus, getLink, turnFilterOn? }` | | How this portal reaches core. `getLink` resolves `{ link }` and rejects with an error carrying `status` (403: refused). `turnFilterOn`, optional, rejects on failure |
+| `api` | `{ getStatus, getProfileStatus, getLink, turnFilterOn?, enableConfigMode? }` | | How this portal reaches core. `getLink` resolves `{ link }` and rejects with an error carrying `status` (403: refused). `turnFilterOn`, optional, rejects on failure |
 | `doneLabel` | `string` | | The summary's button, translated |
 | `onDone` | `() => void` | | |
 | `headingLevel` | `1 | 2` | `1` | Of the progress phrase; step titles sit one below |
@@ -2256,6 +2259,7 @@ supervise line on the app step.
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
 | `handover` | `'auto' | 'both' | 'button'` | `'auto'` | How a link reaches the phone; see above |
 | `supervised` | `boolean` | `false` | The device is supervised already: no prerequisites or supervise line |
+| `mdm` | `boolean` | `false` | The short MDM path; see above |
 
 ### Wizard
 
@@ -3392,7 +3396,7 @@ prerendered pages. Used by the customer portal's marketing pages and every OAuth
 `@mbsmart/ui/install`: the walkthrough's logic, for a host that needs a piece of it
 without the component.
 
-- `installStepsFor(deviceType, audience, { handover, filterHere, supervised, screenTime })` and `hasInstallSteps(deviceType)`.
+- `installStepsFor(deviceType, audience, { handover, filterHere, supervised, screenTime, mdm })` and `hasInstallSteps(deviceType)`.
   The order is link first and profile last: every device redeems an enrolment code
   straight after the app is installed, so the portal hears from it for the rest of
   the setup; every device installs its profile last.

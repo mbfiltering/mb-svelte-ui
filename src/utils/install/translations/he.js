@@ -69,6 +69,7 @@ export const translations = {
 		step_link_body: "זה יוצר תקשורת בין MB Smart לבין המכשיר.",
 		step_profile_title: "התקינו את פרופיל הסינון",
 		step_profile_body: "הפרופיל הוא מה שמחזיק את MB Smart במקום.",
+		step_linked_by_profile_body: "הפרופיל מקשר את האפליקציה ל-MB Smart בעצמו. אין כאן מה לעשות: הדף יתעדכן ברגע שזה יקרה.",
 		account_question: "עם איזה סוג של חשבון Apple המכשיר הזה מחובר?",
 		account_adult_label: "מבוגר",
 		account_child_label: "ילד או נער",

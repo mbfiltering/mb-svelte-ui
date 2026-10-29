@@ -84,6 +84,8 @@
  * @property {Record<string, any> | null} [status] `GET /device/{id}/status`
  * @property {{ installed?: boolean, installed_at?: string, is_latest?: boolean } | null} [profile]
  * @property {number} [now] When the evidence was read, in ms; `Date.now()` if absent.
+ * @property {{ status?: Record<string, any> | null, profile?: Record<string, any> | null }} [before]
+ *   The first status and profile read since the walkthrough opened; a key is absent until read.
  *
  * @typedef {object} InstallStep
  * @property {string} id
@@ -108,6 +110,8 @@
  *   is the technician portal's Enable protection button.
  * @property {boolean} [screenTimeChoice] The step asks whether to use Screen
  *   Time, which adds or removes the `screen_time` step.
+ * @property {boolean} [configModeOnConfirm] Confirming it turns v2 config mode on
+ *   (`api.enableConfigMode`).
  */
 
 import { APP_STORE_URL, DEVICE_PORTAL_URL } from './links.js';
@@ -369,6 +373,56 @@ const FILTER_ON_STEP = {
 };
 
 /**
+ * Is a stamp recent and not the one the device had when the walkthrough opened?
+ * The MDM path's devices were set up before, so a recent stamp alone may be theirs.
+ *
+ * @param {string | number | undefined | null} value
+ * @param {string | number | undefined | null} [before]
+ * @param {number} [now]
+ */
+const isNewStamp = (value, before, now) => isRecentStamp(value, now) && value !== before;
+
+/** The app reported in since the walkthrough opened, by itself or its content filter. */
+const appLinkedSinceOpen = (/** @type {InstallStepEvidence} */ { status, before, now }) =>
+	!!before &&
+	'status' in before &&
+	(isNewStamp(status?.last_sync, before.status?.last_sync, now) ||
+		isNewStamp(status?.last_app_sync, before.status?.last_app_sync, now));
+
+/**
+ * The MDM path (`ios_settings_mdm_config_mode_all_restrictions`, MHomsany, 2026-10-29): MDM holds
+ * the restrictions and the profile links the app, so no link, trust or Screen Time step.
+ * @type {InstallStep[]}
+ */
+const MDM_STEPS = [
+	{
+		...INSTALL_APP_STEP,
+		instructionKeys: ['DeviceInstall.step_install_app_store'],
+		isDone: undefined,
+		configModeOnConfirm: true
+	},
+	{
+		...PROFILE_STEP,
+		isDone: ({ profile, before, now }) =>
+			!!before &&
+			'profile' in before &&
+			profile?.installed === true &&
+			isNewStamp(profile.installed_at, before.profile?.installed_at, now)
+	},
+	{
+		id: 'linked_by_profile',
+		titleKey: 'DeviceInstall.step_link_title',
+		bodyKey: 'DeviceInstall.step_linked_by_profile_body',
+		confirm: 'auto',
+		waitKey: 'DeviceInstall.step_link_wait',
+		confirmedKey: 'DeviceInstall.step_link_done',
+		isDone: appLinkedSinceOpen
+	},
+	EXTENSION_STEP,
+	FILTER_ON_STEP
+];
+
+/**
  * @typedef {'customer' | 'technician'} InstallAudience Who is reading. The
  *   technician portal's popup is read by the person the customer's copy tells to
  *   go and find: an MB Smart technician.
@@ -492,6 +546,8 @@ function withoutSupervision(steps) {
  *   2026-10-08). Drops the supervise line and the prerequisites.
  * @property {boolean} [screenTime] The reader ticked "Use Screen Time" on the
  *   link step, which adds the Screen Time step after the extensions.
+ * @property {boolean} [mdm] The device has `ios_settings_mdm_config_mode_all_restrictions`
+ *   on: the short MDM path (`MDM_STEPS`).
  */
 
 /**
@@ -504,7 +560,7 @@ function withoutSupervision(steps) {
  */
 export function installStepsFor(deviceType, audience = 'customer', options = {}) {
 	const lines = HANDOVER_LINES[options.handover ?? 'auto'];
-	let steps = forAudience(deviceType, audience, !!options.screenTime);
+	let steps = forAudience(deviceType, audience, !!options.screenTime, !!options.mdm);
 	if (lines) steps = steps.map((step) => withLines(step, lines));
 	if (options.filterHere) steps = steps.map((step) => filterHereStep(step, audience));
 	if (options.supervised) steps = withoutSupervision(steps);
@@ -515,11 +571,12 @@ export function installStepsFor(deviceType, audience = 'customer', options = {})
  * @param {string | undefined | null} deviceType
  * @param {InstallAudience} audience
  * @param {boolean} screenTime
+ * @param {boolean} mdm
  * @returns {InstallStep[]}
  */
-function forAudience(deviceType, audience, screenTime) {
+function forAudience(deviceType, audience, screenTime, mdm) {
 	if (!hasInstallSteps(deviceType)) return [];
-	const steps = [
+	const steps = mdm ? MDM_STEPS : [
 		PREREQUISITES_STEP,
 		INSTALL_APP_STEP,
 		LINK_STEP,
