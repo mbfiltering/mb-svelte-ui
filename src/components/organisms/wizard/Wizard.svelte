@@ -63,6 +63,7 @@
 	 * @prop {(id: string) => void} [onundo]
 	 * @prop {1 | 2} [headingLevel] Of the phrase.
 	 * @prop {boolean} [framed] Draw the step in its own card; off inside a popup.
+	 * @prop {boolean} [autoAdvance] A step proved while on screen moves on by itself, after a moment.
 	 */
 	import { tick } from 'svelte';
 	import { Check, ChevronLeft, ChevronRight } from '@lucide/svelte';
@@ -79,6 +80,7 @@
 		index = $bindable(-1),
 		canConfirm = true,
 		phrase,
+		autoAdvance = false,
 		onattest = () => {},
 		onundo = () => {},
 		headingLevel = 1,
@@ -117,18 +119,37 @@
 	}
 
 	/**
-	 * Forward first, then the earliest gap, then the summary: the steps in
-	 * between can already be done.
-	 *
-	 * @param {string} id
+	 * Where finishing the step on screen lands. Forward first, then the earliest
+	 * gap, then the summary: the steps in between can already be done.
 	 */
-	function attest(id) {
-		onattest(id);
+	function nextIndex() {
 		const done = steps.map((s, i) => i === currentIndex || s.done);
 		const ahead = done.findIndex((d, i) => i >= currentIndex && !d);
 		const gap = done.indexOf(false);
-		goTo(ahead !== -1 ? ahead : gap !== -1 ? gap : summaryIndex);
+		return ahead !== -1 ? ahead : gap !== -1 ? gap : summaryIndex;
 	}
+
+	/** @param {string} id */
+	function attest(id) {
+		onattest(id);
+		goTo(nextIndex());
+	}
+
+	/** Long enough to see the step's mark before it moves on. */
+	const AUTO_ADVANCE_MS = 1500;
+	let shown = /** @type {{ id: string | null, proved: boolean } | null} */ (null);
+	let advanceTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+
+	// Only a proof that arrives on screen moves on, so Back to a finished step stays. No focus move: no gesture
+	$effect(() => {
+		const id = onSummary ? null : (current?.id ?? null);
+		const proved = !!current?.confirmedByDevice;
+		if (id !== shown?.id) clearTimeout(advanceTimer);
+		else if (autoAdvance && proved && !shown.proved)
+			advanceTimer = setTimeout(() => (index = nextIndex()), AUTO_ADVANCE_MS);
+		shown = { id, proved };
+	});
+	$effect(() => () => clearTimeout(advanceTimer));
 
 	/** @param {string} id */
 	function undo(id) {

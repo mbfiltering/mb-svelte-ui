@@ -413,14 +413,16 @@ const MDM_STEPS = [
 		id: 'linked_by_profile',
 		titleKey: 'DeviceInstall.step_link_title',
 		bodyKey: 'DeviceInstall.step_linked_by_profile_body',
-		// Here, not a step of its own (MHomsany): no Screen Time on this path
-		instructionKeys: ['DeviceInstall.step_link_3'],
 		confirm: 'auto',
 		waitKey: 'DeviceInstall.step_link_wait',
 		confirmedKey: 'DeviceInstall.step_link_done',
 		isDone: appLinkedSinceOpen
 	},
-	FILTER_ON_STEP
+	// The app asks right after it links, when this step is on screen (MHomsany: no step of its own)
+	{
+		...FILTER_ON_STEP,
+		instructionKeys: ['DeviceInstall.step_link_3', ...(FILTER_ON_STEP.instructionKeys ?? [])]
+	}
 ];
 
 /**

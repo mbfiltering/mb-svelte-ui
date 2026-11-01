@@ -2228,7 +2228,9 @@ that is supervised already (the device portal's are): no prerequisites, and no
 supervise line on the app step. `mdm` is for a device with
 `ios_settings_mdm_config_mode_all_restrictions` on: app (confirming it calls
 `api.enableConfigMode`), profile, the app linking by itself, filter.
-Its stamps count only when they differ from the first ones read.
+Its stamps count only when they differ from the first ones read, and a proved
+step moves on by itself (`Wizard`'s `autoAdvance`). The app's "Skip for Now" line
+is on the filter step and the summary.
 
 ```svelte
 <script>
@@ -2307,6 +2309,7 @@ next unfinished one; turning a page moves focus onto it.
 | `onattest`, `onundo` | `(id) => void` | | A step's button, and taking its tick back |
 | `headingLevel` | `1 | 2` | `1` | Of the phrase |
 | `framed` | `boolean` | `true` | Draw the step in its own card; off inside a popup |
+| `autoAdvance` | `boolean` | `false` | A step proved while on screen moves on by itself after 1.5 s; focus stays put |
 
 `progress` is `{ completed, total, current, onSummary }`.
 

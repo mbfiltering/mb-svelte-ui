@@ -80,6 +80,7 @@
 	import ControlButton from '../../atoms/ControlButton.svelte';
 	import Skeleton from '../../atoms/Skeleton.svelte';
 	import Wizard from '../wizard/Wizard.svelte';
+	import RichText from '../../atoms/RichText.svelte';
 	import InstallStepPanel from './InstallStepPanel.svelte';
 
 	let {
@@ -278,6 +279,7 @@
 			startKey={deviceId}
 			bind:index={viewIndex}
 			{canConfirm}
+			autoAdvance={mdm}
 			onattest={(id) => {
 				// A failure resurfaces on the profile link, which turns it on again first
 				if (steps.find((step) => step.id === id)?.configModeOnConfirm)
@@ -321,6 +323,11 @@
 								protectedNow ? 'DeviceInstall.all_done_body' : 'DeviceInstall.all_done_unconfirmed'
 							)}
 						</p>
+						{#if mdm}
+							<p class="text-sm text-gray-600 dark:text-gray-300">
+								<RichText text={$t('DeviceInstall.step_link_3')} />
+							</p>
+						{/if}
 						{#if closeHint}
 							<p class="text-base font-semibold text-green-alt-700 dark:text-green-alt-300">
 								{$t('DeviceInstall.all_done_close')}
