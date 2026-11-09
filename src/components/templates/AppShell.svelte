@@ -21,6 +21,8 @@
 		// Account chip (header, start side)
 		userName = '',
 		userHref = '/dashboard',
+		// Crown on the avatar: the signed-in person owns this account
+		userOwner = false,
 		homeLabel = 'Home',
 
 		// Nav (header, end side) — see HeaderNav for the NavItem shape
@@ -83,6 +85,7 @@
 				data-sveltekit-reload
 			>
 				<Avatar
+					owner={userOwner}
 					className="transition-colors group-hover:bg-azure-200 group-hover:text-azure-900 dark:group-hover:bg-azure-800 dark:group-hover:text-azure-100"
 				/>
 				{#if userName}

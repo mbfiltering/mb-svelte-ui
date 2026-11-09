@@ -200,6 +200,7 @@ Circular identity mark with a plain-SVG person glyph. Used by `AppShell`'s accou
 | `size`      | string | `h-8 w-8`  | Tailwind size classes for the circle                                  |
 | `className` | string | `''`       | Additional classes (hover states, ring, margin)                       |
 | `ariaLabel` | string | `''`       | Give it a name only when it stands alone; empty keeps it `aria-hidden` |
+| `owner`     | bool   | `false`    | Small crown on the circle's top edge: the signed-in person owns the account |
 
 **Usage:**
 
@@ -2928,6 +2929,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 | ----------------- | ---------- | -------------- | ------------------------------------------------------------------ |
 | `userName`        | string     | `''`           | Signed-in account, shown beside the avatar (e.g. `tagintl`, a name) |
 | `userHref`        | string     | `/dashboard`   | Where the account chip links — normally the dashboard              |
+| `userOwner`       | bool       | `false`        | Crown on the avatar (`Avatar`'s `owner`): the signed-in person owns the account |
 | `homeLabel`       | string     | `'Home'`       | Accessible name for the chip link; pass a translated string        |
 | `navItems`        | `NavItem[]`| `[]`           | Nav, rendered as an icon row on `sm+` and a hamburger below it (see [HeaderNav](#headernav)) |
 | `menuLabel`       | string     | `'Menu'`       | Accessible name for the hamburger; pass a translated string        |
