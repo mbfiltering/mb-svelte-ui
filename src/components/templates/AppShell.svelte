@@ -1,6 +1,8 @@
 <script>
+	import { ChevronDown } from '@lucide/svelte';
 	import SvgIcon from '../atoms/SvgIcon.svelte';
 	import Avatar from '../atoms/Avatar.svelte';
+	import NavDropdown from '../atoms/NavDropdown.svelte';
 	import HeaderNav from '../molecules/HeaderNav.svelte';
 
 	/**
@@ -12,14 +14,15 @@
 	 * over it.
 	 *
 	 * Includes:
-	 * - Sticky header: account chip (avatar + name), app content, nav
+	 * - Sticky header: app content, nav, account chip (avatar + name)
 	 * - Optional loading progress bar
 	 * - Main content area
 	 * - Faded brand footer with the product name, version and an optional action
 	 */
 	let {
-		// Account chip (header, start side)
+		// Account chip (header, end side): a menu of `accountItems` (NavItem[]), else a link to `userHref`
 		userName = '',
+		accountItems = [],
 		userHref = '/dashboard',
 		// Crown on the avatar: the signed-in person owns this account
 		userOwner = false,
@@ -56,6 +59,22 @@
 	} = $props();
 </script>
 
+{#snippet chip()}
+	<Avatar
+		owner={userOwner}
+		className="shrink-0 transition-colors group-hover:bg-azure-200 group-hover:text-azure-900 dark:group-hover:bg-azure-800 dark:group-hover:text-azure-100"
+	/>
+	{#if userName}
+		<!-- leading-normal, not leading-none: `truncate` clips overflow, and a
+		     1em line box cuts the descenders off a name like "Greg". -->
+		<span
+			class="min-w-0 truncate text-sm leading-normal font-semibold text-azure-700 transition-colors group-hover:text-azure-900 lg:text-base dark:text-azure-500 dark:group-hover:text-azure-100"
+		>
+			{userName}
+		</span>
+	{/if}
+{/snippet}
+
 <!-- `--mb-header-h` is the sticky header's own height, published so that
      anything pinning itself underneath the header can read it instead of
      guessing. `PageHeader` is the one consumer today. Keep it in step with the
@@ -76,29 +95,7 @@
 
 	<!-- Sticky Header -->
 	<header class="sticky top-0 z-20 h-14 bg-white px-4 py-2 shadow-lg dark:bg-zinc-800">
-		<div class="flex items-center justify-between gap-4">
-			<!-- Account chip: who is signed in, and the way home -->
-			<a
-				href={userHref}
-				class="group flex min-w-0 items-center gap-2.5"
-				aria-label={homeLabel}
-				data-sveltekit-reload
-			>
-				<Avatar
-					owner={userOwner}
-					className="transition-colors group-hover:bg-azure-200 group-hover:text-azure-900 dark:group-hover:bg-azure-800 dark:group-hover:text-azure-100"
-				/>
-				{#if userName}
-					<!-- leading-normal, not leading-none: `truncate` clips overflow, and a
-					     1em line box cuts the descenders off a name like "Greg". -->
-					<span
-						class="truncate text-sm leading-normal font-semibold text-azure-700 transition-colors group-hover:text-azure-900 lg:text-base dark:text-azure-500 dark:group-hover:text-azure-100"
-					>
-						{userName}
-					</span>
-				{/if}
-			</a>
-
+		<div class="flex items-center gap-2 sm:gap-4">
 			<!-- App content (search and the like), then the nav. Never shrinks, so a
 			     long name truncates instead of pushing these off the bar. -->
 			<div class="flex shrink-0 grow items-center justify-end gap-2 sm:gap-4">
@@ -108,6 +105,37 @@
 				<nav aria-label={navLabel}>
 					<HeaderNav items={navItems} {menuLabel} />
 				</nav>
+			</div>
+
+			<!-- Account chip: who is signed in, opening the account menu -->
+			<div class="min-w-0">
+				{#if accountItems.length}
+					<NavDropdown
+						config={accountItems}
+						title={homeLabel}
+						className="group flex max-w-full items-center gap-2 rounded-lg"
+					>
+						{#snippet trigger(isOpen)}
+							{@render chip()}
+							<ChevronDown
+								size={16}
+								strokeWidth={2}
+								class="shrink-0 text-azure-700 transition-transform dark:text-azure-500 {isOpen
+									? 'rotate-180'
+									: ''}"
+							/>
+						{/snippet}
+					</NavDropdown>
+				{:else}
+					<a
+						href={userHref}
+						class="group flex items-center gap-2.5"
+						aria-label={homeLabel}
+						data-sveltekit-reload
+					>
+						{@render chip()}
+					</a>
+				{/if}
 			</div>
 		</div>
 	</header>

@@ -16,7 +16,9 @@
 		color = 'azure',
 		disabled = false,
 		className = '',
-		dropdownClassName = ''
+		dropdownClassName = '',
+		// Replaces the button's styling and content; gets `isOpen`
+		trigger = undefined
 	} = $props();
 
 	let isOpen = $state(false);
@@ -31,7 +33,9 @@
 	const items = $derived(Array.isArray(config) ? config.filter(Boolean) : []);
 	const isTriggerDisabled = $derived(disabled || items.length === 0);
 	const triggerClasses = $derived(
-		`flex items-center gap-2 g2 rounded-lg border px-2 py-2 font-medium transition-colors xl:px-4 ${getNavButtonColorClasses(color)} ${className}`
+		trigger
+			? className
+			: `flex items-center gap-2 g2 rounded-lg border px-2 py-2 font-medium transition-colors xl:px-4 ${getNavButtonColorClasses(color)} ${className}`
 	);
 	const triggerStateClasses = $derived(getNavButtonStateClasses(isTriggerDisabled));
 
@@ -64,7 +68,7 @@
 	});
 </script>
 
-<div class="relative inline-block" bind:this={dropdownElement}>
+<div class="relative inline-block max-w-full" bind:this={dropdownElement}>
 	<button
 		type="button"
 		bind:this={triggerElement}
@@ -76,18 +80,22 @@
 		aria-expanded={isOpen}
 		aria-controls={panelId}
 	>
-		{#if icon}
-			{@const IconComponent = icon}
-			<IconComponent size={18} strokeWidth={2} />
+		{#if trigger}
+			{@render trigger(isOpen)}
+		{:else}
+			{#if icon}
+				{@const IconComponent = icon}
+				<IconComponent size={18} strokeWidth={2} />
+			{/if}
+			{#if label}
+				<span class="hidden text-sm xl:inline">{label}</span>
+			{/if}
+			<ChevronDown
+				size={16}
+				strokeWidth={2}
+				class="transition-transform {isOpen ? 'rotate-180' : ''}"
+			/>
 		{/if}
-		{#if label}
-			<span class="hidden text-sm xl:inline">{label}</span>
-		{/if}
-		<ChevronDown
-			size={16}
-			strokeWidth={2}
-			class="transition-transform {isOpen ? 'rotate-180' : ''}"
-		/>
 	</button>
 
 	{#if isOpen}

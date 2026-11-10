@@ -52,6 +52,14 @@ export const authTranslations = {
 			ru: 'Выйти',
 			yi: 'אַרויסלאָגן'
 		},
+		switch_account: {
+			en: 'Switch account',
+			es: 'Cambiar de cuenta',
+			fr: 'Changer de compte',
+			he: 'החלפת חשבון',
+			ru: 'Сменить аккаунт',
+			yi: 'בײַטן קאָנטע'
+		},
 		signing_in: {
 			en: 'Signing in…',
 			es: 'Iniciando sesión…',

@@ -795,6 +795,7 @@ Dropdown group of navigation actions. The trigger matches `NavButton` styling an
 | `disabled` | `boolean` | `false` | Disables the trigger |
 | `className` | `string` | `''` | Additional CSS classes for the trigger |
 | `dropdownClassName` | `string` | `''` | Additional CSS classes for the dropdown container |
+| `trigger` | `snippet` | - | Replaces the trigger's content and styling (`className` only); receives `isOpen`. AppShell's account chip uses it |
 
 **Usage:**
 
@@ -2927,7 +2928,7 @@ Complex page template with sidebar navigation, magic search, and section content
 
 Full page layout template: sticky header, loading progress bar, main content area, and a faded brand footer.
 
-**The header is identity, the footer is product.** The header carries the signed-in account (avatar + name) and the nav; the product name ("MB Smart Filtering", "MB Smart Technician") lives in the footer with the version, the way a copyright line does. Do not pass a product name as `userName` — that conflation is what made the two portals' headers mean different things.
+**The header is identity, the footer is product.** The header carries the nav and, at its end, the signed-in account (avatar + name); the product name ("MB Smart Filtering", "MB Smart Technician") lives in the footer with the version, the way a copyright line does. Do not pass a product name as `userName` — that conflation is what made the two portals' headers mean different things.
 
 **A long `userName` truncates; the header's controls never shrink**, so a long name cannot push them off the bar on a phone.
 
@@ -2938,7 +2939,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 ```svelte
 <script>
 	import { AppShell } from '@mbsmart/ui/templates';
-	import { LogOut, Settings, UserRoundPlus } from '@lucide/svelte';
+	import { ArrowLeftRight, LogOut, Settings, UserRoundPlus } from '@lucide/svelte';
 </script>
 ```
 
@@ -2947,9 +2948,10 @@ Full page layout template: sticky header, loading progress bar, main content are
 | Prop              | Type       | Default        | Description                                                        |
 | ----------------- | ---------- | -------------- | ------------------------------------------------------------------ |
 | `userName`        | string     | `''`           | Signed-in account, shown beside the avatar (e.g. `tagintl`, a name) |
-| `userHref`        | string     | `/dashboard`   | Where the account chip links — normally the dashboard              |
+| `accountItems`    | `NavItem[]`| `[]`           | The account chip's menu (e.g. Switch account, Sign out). Empty makes the chip a link to `userHref` |
+| `userHref`        | string     | `/dashboard`   | Where the chip links when there is no `accountItems`               |
 | `userOwner`       | bool       | `false`        | Crown on the avatar (`Avatar`'s `owner`): the signed-in person owns the account |
-| `homeLabel`       | string     | `'Home'`       | Accessible name for the chip link; pass a translated string        |
+| `homeLabel`       | string     | `'Home'`       | Accessible name for the chip; pass a translated string             |
 | `navItems`        | `NavItem[]`| `[]`           | Nav, rendered as an icon row on `sm+` and a hamburger below it (see [HeaderNav](#headernav)) |
 | `menuLabel`       | string     | `'Menu'`       | Accessible name for the hamburger; pass a translated string        |
 | `productName`     | string     | `''`           | Product name in the footer. Empty hides the footer entirely        |
@@ -2967,8 +2969,11 @@ Full page layout template: sticky header, loading progress bar, main content are
 ```svelte
 <AppShell
 	userName={userId}
-	userHref="/{lang}/dashboard"
-	homeLabel={$t('nav.home')}
+	homeLabel={$t('nav.account')}
+	accountItems={[
+		{ href: IDENTITY_ACCOUNT_LINK, icon: ArrowLeftRight, label: $t('auth.switch_account') },
+		{ onclick: logout, icon: LogOut, label: $t('auth.sign_out'), color: 'red' }
+	]}
 	productName="MB Smart Technician"
 	versionString={VERSION_STRING}
 	menuLabel={$t('nav.menu')}
@@ -2977,8 +2982,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 			{ href: `/${lang}/dashboard/device/new`, icon: UserRoundPlus, label: $t('nav.newDevice') },
 			{ href: `/${lang}/dashboard/customers`, icon: Users, label: $t('customers.title') }
 		] },
-		{ href: `/${lang}/dashboard/settings`, icon: Settings, label: $t('nav.settings') },
-		{ onclick: logout, icon: LogOut, label: $t('auth.logout'), color: 'red' }
+		{ href: `/${lang}/dashboard/settings`, icon: Settings, label: $t('nav.settings') }
 	]}
 	loadingProgress={75}
 	isFullyLoaded={false}
@@ -2998,7 +3002,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 
 - Full page layout with `min-h-screen` and neutral background
 - Sticky header (`sticky top-0 z-20`) with shadow
-- Account chip: `Avatar` + name, one link to `userHref`, shared hover — circle, glyph and name all move together, **lightening** in dark mode and darkening in light, and the name takes the same hover shade as the glyph
+- Account chip at the header's end: `Avatar` + name + chevron opening `accountItems` as a [NavDropdown](#navdropdown) panel at every width, shared hover — circle, glyph and name all move together, **lightening** in dark mode and darkening in light, and the name takes the same hover shade as the glyph
 - Nav collapses to a hamburger below `sm`, where labels become visible
 - Loading progress bar below header (sticky, animates)
 - Faded brand footer, in-flow after `<main>` — it sits at the bottom on short pages and scrolls away on long ones
