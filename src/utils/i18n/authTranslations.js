@@ -13,7 +13,7 @@
  *   - two words for the verb, hyphenated before a noun ("sign-in code")
  *   - sentence case, so a button reads "Sign in" and not "Sign In"
  *
- * Key-first data, i.e. all six languages at once — it is a dozen strings, and an
+ * Key-first data, i.e. all six languages at once — it is about twenty strings, and an
  * app must not have to wait for a locale chunk to label its own sign-out button.
  * Registered by each app's i18n module alongside `safetyTranslations`; a
  * consumer that genuinely needs different wording can still override a key from
@@ -52,13 +52,29 @@ export const authTranslations = {
 			ru: 'Выйти',
 			yi: 'אַרויסלאָגן'
 		},
-		switch_account: {
-			en: 'Switch account',
-			es: 'Cambiar de cuenta',
-			fr: 'Changer de compte',
-			he: 'החלפת חשבון',
-			ru: 'Сменить аккаунт',
-			yi: 'בײַטן קאָנטע'
+		manage_accounts: {
+			en: 'Manage accounts',
+			es: 'Gestionar cuentas',
+			fr: 'Gérer les comptes',
+			he: 'ניהול חשבונות',
+			ru: 'Управление аккаунтами',
+			yi: 'פֿאַרוואַלטן קאָנטעס'
+		},
+		admin_account: {
+			en: 'Admin account',
+			es: 'Cuenta de administrador',
+			fr: 'Compte administrateur',
+			he: 'חשבון מנהל',
+			ru: 'Аккаунт администратора',
+			yi: 'אַדמיניסטראַטאָר־קאָנטע'
+		},
+		customer_accounts: {
+			en: 'Customer accounts',
+			es: 'Cuentas de cliente',
+			fr: 'Comptes client',
+			he: 'חשבונות לקוח',
+			ru: 'Аккаунты клиентов',
+			yi: 'קונה־קאָנטעס'
 		},
 		signing_in: {
 			en: 'Signing in…',
@@ -99,6 +115,22 @@ export const authTranslations = {
 			he: 'להתנתק?',
 			ru: 'Выйти?',
 			yi: 'אַרויסלאָגן?'
+		},
+		sign_out_all_title: {
+			en: 'Sign out of all accounts?',
+			es: '¿Cerrar sesión en todas las cuentas?',
+			fr: 'Se déconnecter de tous les comptes ?',
+			he: 'להתנתק מכל החשבונות?',
+			ru: 'Выйти из всех аккаунтов?',
+			yi: 'אַרויסלאָגן פֿון אַלע קאָנטעס?'
+		},
+		sign_out_all_message: {
+			en: 'You will be signed out of every MB Smart account in this browser.',
+			es: 'Se cerrará la sesión de todas tus cuentas de MB Smart en este navegador.',
+			fr: 'Vous serez déconnecté de tous vos comptes MB Smart dans ce navigateur.',
+			he: 'תנותקו מכל חשבונות MB Smart בדפדפן הזה.',
+			ru: 'Вы выйдете из всех аккаунтов MB Smart в этом браузере.',
+			yi: 'איר וועט אַרויסגעלאָגט ווערן פֿון אַלע MB Smart קאָנטעס אין דעם בלעטערער.'
 		},
 		sign_in_failed: {
 			en: 'Sign-in failed',

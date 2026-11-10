@@ -18,7 +18,9 @@
 		className = '',
 		dropdownClassName = '',
 		// Replaces the button's styling and content; gets `isOpen`
-		trigger = undefined
+		trigger = undefined,
+		// Rendered above the items, inside the panel
+		panelTop = undefined
 	} = $props();
 
 	let isOpen = $state(false);
@@ -103,6 +105,9 @@
 		     arrow-key navigation and a roving tabindex that this does not implement;
 		     aria-expanded + aria-controls describe it correctly, and Tab works. -->
 		<ul id={panelId} class="{NAV_PANEL_CLASSES} {dropdownClassName}" aria-label={title || label}>
+			{#if panelTop}
+				<li>{@render panelTop()}</li>
+			{/if}
 			{#each items as item}
 				<li>
 					{#if item.href && !item.onclick}

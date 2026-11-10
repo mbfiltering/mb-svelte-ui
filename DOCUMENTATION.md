@@ -796,6 +796,7 @@ Dropdown group of navigation actions. The trigger matches `NavButton` styling an
 | `className` | `string` | `''` | Additional CSS classes for the trigger |
 | `dropdownClassName` | `string` | `''` | Additional CSS classes for the dropdown container |
 | `trigger` | `snippet` | - | Replaces the trigger's content and styling (`className` only); receives `isOpen`. AppShell's account chip uses it |
+| `panelTop` | `snippet` | - | Rendered inside the panel above the items (AppShell's account list) |
 
 **Usage:**
 
@@ -2928,7 +2929,7 @@ Complex page template with sidebar navigation, magic search, and section content
 
 Full page layout template: sticky header, loading progress bar, main content area, and a faded brand footer.
 
-**The header is identity, the footer is product.** The header carries the nav and, at its end, the signed-in account (avatar + name); the product name ("MB Smart Filtering", "MB Smart Technician") lives in the footer with the version, the way a copyright line does. Do not pass a product name as `userName` — that conflation is what made the two portals' headers mean different things.
+**The header is identity, the footer is product.** The header carries the nav and, at its end, the signed-in account (avatar + name), with an optional logo link home at its start; the product name ("MB Smart Filtering", "MB Smart Technician") lives in the footer with the version, the way a copyright line does. Do not pass a product name as `userName` — that conflation is what made the two portals' headers mean different things.
 
 **A long `userName` truncates; the header's controls never shrink**, so a long name cannot push them off the bar on a phone.
 
@@ -2939,7 +2940,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 ```svelte
 <script>
 	import { AppShell } from '@mbsmart/ui/templates';
-	import { ArrowLeftRight, LogOut, Settings, UserRoundPlus } from '@lucide/svelte';
+	import { LogOut, Settings, UserRoundPlus, UsersRound } from '@lucide/svelte';
 </script>
 ```
 
@@ -2948,12 +2949,15 @@ Full page layout template: sticky header, loading progress bar, main content are
 | Prop              | Type       | Default        | Description                                                        |
 | ----------------- | ---------- | -------------- | ------------------------------------------------------------------ |
 | `userName`        | string     | `''`           | Signed-in account, shown beside the avatar (e.g. `tagintl`, a name) |
-| `accountItems`    | `NavItem[]`| `[]`           | The account chip's menu (e.g. Switch account, Sign out). Empty makes the chip a link to `userHref` |
+| `accountItems`    | `NavItem[]`| `[]`           | The account chip's menu (e.g. Manage accounts, Sign out). Empty makes the chip a link to `userHref` |
+| `accountGroups`   | array      | `[]`           | Accounts to switch to, listed above `accountItems`: `[{ label, items: [{ label, detail, href, owner, current }] }]`. `current` is ticked and not a link |
 | `userHref`        | string     | `/dashboard`   | Where the chip links when there is no `accountItems`               |
 | `userOwner`       | bool       | `false`        | Crown on the avatar (`Avatar`'s `owner`): the signed-in person owns the account |
 | `homeLabel`       | string     | `'Home'`       | Accessible name for the chip; pass a translated string             |
 | `navItems`        | `NavItem[]`| `[]`           | Nav, rendered as an icon row on `sm+` and a hamburger below it (see [HeaderNav](#headernav)) |
 | `menuLabel`       | string     | `'Menu'`       | Accessible name for the hamburger; pass a translated string        |
+| `brandHref`       | string     | `''`           | The app's main page: shows the logo and `brandLabel` at the header's start, linking there |
+| `brandLabel`      | string     | `'MB Smart'`   | Text beside the header logo (hidden below `sm`, kept as the link's name) |
 | `productName`     | string     | `''`           | Product name in the footer. Empty hides the footer entirely        |
 | `brandIcon`       | string     | `mbsmart-logo` | Footer icon name for `SvgIcon`                                     |
 | `versionString`   | string     | `''`           | Version, appended to the product name after a `·`                  |
@@ -2971,7 +2975,7 @@ Full page layout template: sticky header, loading progress bar, main content are
 	userName={userId}
 	homeLabel={$t('nav.account')}
 	accountItems={[
-		{ href: IDENTITY_ACCOUNT_LINK, icon: ArrowLeftRight, label: $t('auth.switch_account') },
+		{ href: IDENTITY_ACCOUNT_LINK, icon: UsersRound, label: $t('auth.manage_accounts') },
 		{ onclick: logout, icon: LogOut, label: $t('auth.sign_out'), color: 'red' }
 	]}
 	productName="MB Smart Technician"

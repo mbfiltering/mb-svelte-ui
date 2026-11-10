@@ -1,9 +1,10 @@
 <script>
-	import { ChevronDown } from '@lucide/svelte';
+	import { Check, ChevronDown } from '@lucide/svelte';
 	import SvgIcon from '../atoms/SvgIcon.svelte';
 	import Avatar from '../atoms/Avatar.svelte';
 	import NavDropdown from '../atoms/NavDropdown.svelte';
 	import HeaderNav from '../molecules/HeaderNav.svelte';
+	import { getNavMenuItemClasses } from '../atoms/navButtonStyles.js';
 
 	/**
 	 * AppShell - Full page layout template.
@@ -14,7 +15,7 @@
 	 * over it.
 	 *
 	 * Includes:
-	 * - Sticky header: app content, nav, account chip (avatar + name)
+	 * - Sticky header: brand link, app content, nav, account chip (avatar + name)
 	 * - Optional loading progress bar
 	 * - Main content area
 	 * - Faded brand footer with the product name, version and an optional action
@@ -23,6 +24,8 @@
 		// Account chip (header, end side): a menu of `accountItems` (NavItem[]), else a link to `userHref`
 		userName = '',
 		accountItems = [],
+		// Accounts to switch to, atop that menu: `[{ label, items: [{ label, detail, href, owner, current }] }]`
+		accountGroups = [],
 		userHref = '/dashboard',
 		// Crown on the avatar: the signed-in person owns this account
 		userOwner = false,
@@ -38,7 +41,9 @@
 		// precedes <main> on every page.
 		skipToContentLabel = 'Skip to main content',
 
-		// Brand (footer)
+		// Brand: header start (when `brandHref` is set) and footer
+		brandHref = '',
+		brandLabel = 'MB Smart',
 		productName = '',
 		brandIcon = 'mbsmart-logo',
 		versionString = '',
@@ -62,7 +67,7 @@
 {#snippet chip()}
 	<Avatar
 		owner={userOwner}
-		className="shrink-0 transition-colors group-hover:bg-azure-200 group-hover:text-azure-900 dark:group-hover:bg-azure-800 dark:group-hover:text-azure-100"
+		className="transition-colors group-hover:bg-azure-200 group-hover:text-azure-900 dark:group-hover:bg-azure-800 dark:group-hover:text-azure-100"
 	/>
 	{#if userName}
 		<!-- leading-normal, not leading-none: `truncate` clips overflow, and a
@@ -73,6 +78,37 @@
 			{userName}
 		</span>
 	{/if}
+{/snippet}
+
+{#snippet accountList()}
+	{#each accountGroups as group (group.label)}
+		<div class="px-3 pt-1.5 pb-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
+			{group.label}
+		</div>
+		<ul class="space-y-1.5" aria-label={group.label}>
+			{#each group.items as account (account.href || account.label)}
+				<li>
+					<svelte:element
+						this={account.current ? 'div' : 'a'}
+						href={account.current ? undefined : account.href}
+						aria-current={account.current ? 'true' : undefined}
+						class={getNavMenuItemClasses({ color: account.current ? 'azure' : 'gray' })}
+					>
+						<Avatar size="h-7 w-7" owner={account.owner} />
+						<span class="min-w-0 flex-1">
+							<span class="block truncate">{account.label}</span>
+							{#if account.detail}
+								<span class="block truncate text-xs font-normal opacity-75">{account.detail}</span>
+							{/if}
+						</span>
+						{#if account.current}
+							<Check size={18} strokeWidth={2} class="shrink-0" aria-hidden="true" />
+						{/if}
+					</svelte:element>
+				</li>
+			{/each}
+		</ul>
+	{/each}
 {/snippet}
 
 <!-- `--mb-header-h` is the sticky header's own height, published so that
@@ -96,6 +132,17 @@
 	<!-- Sticky Header -->
 	<header class="sticky top-0 z-20 h-14 bg-white px-4 py-2 shadow-lg dark:bg-zinc-800">
 		<div class="flex items-center gap-2 sm:gap-4">
+			{#if brandHref}
+				<a
+					href={brandHref}
+					class="flex shrink-0 items-center gap-2 text-azure-700 transition-colors hover:text-azure-900 dark:text-azure-500 dark:hover:text-azure-100"
+					aria-label={brandLabel}
+				>
+					<SvgIcon name={brandIcon} size="w-7 h-7" />
+					<span class="hidden text-base font-bold sm:inline">{brandLabel}</span>
+				</a>
+			{/if}
+
 			<!-- App content (search and the like), then the nav. Never shrinks, so a
 			     long name truncates instead of pushing these off the bar. -->
 			<div class="flex shrink-0 grow items-center justify-end gap-2 sm:gap-4">
@@ -114,6 +161,8 @@
 						config={accountItems}
 						title={homeLabel}
 						className="group flex max-w-full items-center gap-2 rounded-lg"
+						dropdownClassName="max-w-[calc(100vw-2rem)]"
+						panelTop={accountGroups.length ? accountList : undefined}
 					>
 						{#snippet trigger(isOpen)}
 							{@render chip()}
