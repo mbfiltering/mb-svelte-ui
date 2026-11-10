@@ -13,7 +13,7 @@
  *   - two words for the verb, hyphenated before a noun ("sign-in code")
  *   - sentence case, so a button reads "Sign in" and not "Sign In"
  *
- * Key-first data, i.e. all six languages at once — it is nine strings, and an
+ * Key-first data, i.e. all six languages at once — it is a dozen strings, and an
  * app must not have to wait for a locale chunk to label its own sign-out button.
  * Registered by each app's i18n module alongside `safetyTranslations`; a
  * consumer that genuinely needs different wording can still override a key from
@@ -99,6 +99,30 @@ export const authTranslations = {
 			he: 'ההתחברות נכשלה',
 			ru: 'Не удалось войти',
 			yi: 'דער אַרײַנלאָג איז דורכגעפֿאַלן'
+		},
+		sign_in_slow: {
+			en: 'This is taking longer than it should.',
+			es: 'Esto está tardando más de lo normal.',
+			fr: 'Cela prend plus de temps que prévu.',
+			he: 'זה לוקח יותר זמן מהרגיל.',
+			ru: 'Это занимает больше времени, чем обычно.',
+			yi: 'דאָס נעמט לענגער װי געװײנטלעך.'
+		},
+		sign_in_slow_hint: {
+			en: 'Check your internet connection, then try again.',
+			es: 'Comprueba tu conexión a internet y vuelve a intentarlo.',
+			fr: 'Vérifiez votre connexion internet, puis réessayez.',
+			he: 'בדקו את החיבור לאינטרנט ונסו שוב.',
+			ru: 'Проверьте подключение к интернету и попробуйте снова.',
+			yi: 'קוקט איבער די אינטערנעט־פֿאַרבינדונג און פּרוּווט נאָך אַ מאָל.'
+		},
+		try_again: {
+			en: 'Try again',
+			es: 'Intentar de nuevo',
+			fr: 'Réessayer',
+			he: 'נסו שוב',
+			ru: 'Попробовать снова',
+			yi: 'פּרוּווט נאָך אַ מאָל'
 		},
 		session_expired: {
 			en: 'Session expired. Please sign in again.',

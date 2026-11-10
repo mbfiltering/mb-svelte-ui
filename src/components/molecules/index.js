@@ -10,4 +10,5 @@ export { default as ListCard } from './ListCard.svelte';
 export { default as MultiInput } from './MultiInput.svelte';
 export { default as NamedControl } from './NamedControl.svelte';
 export { default as PageHeader } from './PageHeader.svelte';
+export { default as SignInWait } from './SignInWait.svelte';
 export { default as Tabs } from './Tabs.svelte';

@@ -58,6 +58,7 @@
    - [MultiInput](#multiinput)
    - [NamedControl](#namedcontrol)
    - [PageHeader](#pageheader)
+   - [SignInWait](#signinwait)
    - [Tabs](#tabs)
 4. [Organisms (Complex Components)](#organisms)
    - [InstallWalkthrough](#installwalkthrough)
@@ -2041,6 +2042,24 @@ down a list and needs to name its own row (e.g. per-app or per-category rows).
 ```
 
 ---
+
+### SignInWait
+
+The whole screen while a sign-in hops between sites (central sign-in and its callback). A bare spinner, so the hop reads as one app; `auth.signing_in` under it after `slowAfter`; after `failAfter`, `auth.sign_in_slow`, a hint and a **Try again** button instead.
+
+```svelte
+<script>
+	import { SignInWait } from '@mbsmart/ui/molecules';
+</script>
+
+<SignInWait onretry={() => startIdentitySignIn(lang, true)} />
+```
+
+| Prop        | Type       | Default             | Description                          |
+| ----------- | ---------- | ------------------- | ------------------------------------ |
+| `slowAfter` | `number`   | `4000`              | ms before "Signing in…" shows        |
+| `failAfter` | `number`   | `20000`             | ms before the spinner gives way to the error |
+| `onretry`   | `function` | `location.reload()` | What **Try again** does              |
 
 ### PageHeader
 
