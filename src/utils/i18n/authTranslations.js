@@ -60,13 +60,13 @@ export const authTranslations = {
 			ru: 'Управление аккаунтами',
 			yi: 'פֿאַרוואַלטן קאָנטעס'
 		},
-		admin_account: {
-			en: 'Admin account',
-			es: 'Cuenta de administrador',
-			fr: 'Compte administrateur',
-			he: 'חשבון מנהל',
-			ru: 'Аккаунт администратора',
-			yi: 'אַדמיניסטראַטאָר־קאָנטע'
+		admin_accounts: {
+			en: 'Admin accounts',
+			es: 'Cuentas de administrador',
+			fr: 'Comptes administrateur',
+			he: 'חשבונות מנהל',
+			ru: 'Аккаунты администратора',
+			yi: 'אַדמיניסטראַטאָר־קאָנטעס'
 		},
 		customer_accounts: {
 			en: 'Customer accounts',
